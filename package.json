@@ -6,11 +6,17 @@
   "scripts": {
     "build": "./node_modules/.bin/webpack",
     "build-production": "./node_modules/.bin/webpack -p",
-    "watch": "./node_modules/.bin/webpack --watch"
+    "watch": "./node_modules/.bin/webpack --watch",
+    "dev": "./node_modules/.bin/webpack-dev-server"
   },
   "author": "Spencer Brimley",
   "license": "ISC",
   "devDependencies": {
-    "webpack": "^3.10.0"
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "webpack": "^3.10.0",
+    "webpack-dev-server": "^2.11.1"
   }
 }
