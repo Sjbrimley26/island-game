@@ -52,55 +52,55 @@ function createPlayer ({...args}) {
       let the_item = this.inventory.find(function(element){
         return element.name === item;
       });
-      this.triggerEffect(this, the_item);
+      this.triggerItemEffect(the_item);
       if (the_item.charge === 0) {
         let deleted_index = this.inventory.indexOf(the_item);
         this.inventory.splice(deleted_index, 1);
       }
     },
 
-    triggerEffect(player, item) {
+    triggerItemEffect(item) {
       item.use();
 
       switch(item.name) {
-        
+
         case "rabbit foot":
-          player.changeLuck(.07);
+          this.changeLuck(.07);
           break;
 
         case "coin of fate":
           if (roll_the_dice(2) === 1) {
-            player.changeLuck(-.1);
+            this.changeLuck(-.1);
           }
           else {
-            player.changeLuck(.1);
+            this.changeLuck(.1);
           }
           break;
 
         case "dark orb":
-          if (lucky_roll(100, player) < 10) {
+          if (lucky_roll(100, this) < 10) {
             //critical failure
-            player.changeLuck(.5);
-            player.changeSanity(-1);
+            this.changeLuck(.5);
+            this.changeSanity(-1);
           }
-          else if (lucky_roll(100, player) < 50) {
+          else if (lucky_roll(100, this) < 50) {
             //fail
-            player.changeLuck(.03);
-            player.changeSanity(-.2);
+            this.changeLuck(.03);
+            this.changeSanity(-.2);
           }
-          else if (lucky_roll(100, player) >= 100) {
+          else if (lucky_roll(100, this) >= 98) {
             //critical success
-            player.changeLuck(-2);
+            this.changeLuck(-2);
             //something amazing I guess
           }
           else {
             //something cool
-            player.changeSanity(-.1);
+            this.changeSanity(-.1);
           }
           break;
 
         case "cursed portal":
-          if (player.sanity < .5) {
+          if (this.sanity < .5) {
             //no effect
             item.charge++;
           }
@@ -111,7 +111,7 @@ function createPlayer ({...args}) {
             //choose_target should trigger a click effect,
             //like making all the tiles clickable and on click
             //the clicked tile's x and y is returned
-            player.changeSanity(-2);
+            this.changeSanity(-2);
           }
           break;
       }
