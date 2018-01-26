@@ -135,6 +135,7 @@ var _Player = __webpack_require__(2);
 
 var _ItemLibrary = __webpack_require__(0);
 
+
 var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -155,6 +156,7 @@ console.dir(player1.inventory);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
 
 
 var _Logic = __webpack_require__(3);
@@ -217,52 +219,51 @@ function createPlayer(_ref) {
       var the_item = this.inventory.find(function (element) {
         return element.name === item;
       });
-      if (the_item !== undefined) {
-        this.triggerEffect(this, the_item);
-        if (the_item.charge === 0) {
-          var deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
-          this.inventory.splice(deleted_index, 1); //or leave it in the inventory
-        } //with no charges?
+
+      this.triggerItemEffect(the_item);
+      if (the_item.charge === 0) {
+        var deleted_index = this.inventory.indexOf(the_item);
+        this.inventory.splice(deleted_index, 1);
       }
     },
-    triggerEffect: function triggerEffect(player, item) {
+    triggerItemEffect: function triggerItemEffect(item) {
       item.use();
 
       switch (item.name) {
 
         case "rabbit foot":
-          player.changeLuck(.07);
+          this.changeLuck(.07);
           break;
 
         case "coin of fate":
           if ((0, _Logic.roll_the_dice)(2) === 1) {
-            player.changeLuck(-.1);
+            this.changeLuck(-.1);
           } else {
-            player.changeLuck(.1);
+            this.changeLuck(.1);
           }
           break;
 
         case "dark orb":
-          if ((0, _Logic.lucky_roll)(100, player) < 10) {
+          if ((0, _Logic.lucky_roll)(100, this) < 10) {
             //critical failure
-            player.changeLuck(.5);
-            player.changeSanity(-1);
-          } else if ((0, _Logic.lucky_roll)(100, player) < 50) {
+            this.changeLuck(.5);
+            this.changeSanity(-1);
+          } else if ((0, _Logic.lucky_roll)(100, this) < 50) {
             //fail
-            player.changeLuck(.03);
-            player.changeSanity(-.2);
-          } else if ((0, _Logic.lucky_roll)(100, player) >= 100) {
+            this.changeLuck(.03);
+            this.changeSanity(-.2);
+          } else if ((0, _Logic.lucky_roll)(100, this) >= 98) {
             //critical success
-            player.changeLuck(-2);
+            this.changeLuck(-2);
             //something amazing I guess
           } else {
             //something cool
-            player.changeSanity(-.1);
+            this.changeSanity(-.1);
           }
           break;
 
         case "cursed portal":
-          if (player.sanity < .5) {
+          if (this.sanity < .5) {
             //no effect
             item.charge++;
           } else {
@@ -272,7 +273,7 @@ function createPlayer(_ref) {
             //choose_target should trigger a click effect,
             //like making all the tiles clickable and on click
             //the clicked tile's x and y is returned
-            player.changeSanity(-2);
+            this.changeSanity(-2);
           }
           break;
       }
