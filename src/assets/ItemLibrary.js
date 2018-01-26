@@ -26,21 +26,53 @@ const itemDB = {
   raresList,
   uncommonsList,
 
-  getRandomCommon () {
-    return this.commonsList[getRandomInt(this.commonsList.length)];
+  getRandomCommon ( exclusion) { //returns any random common item but the exclusion
+    if (!exclusion) {
+      return this.commonsList[getRandomInt(this.commonsList.length)];
+    }
+    else {
+      let newItem;
+      do {
+        newItem = this.commonsList[getRandomInt(this.commonsList.length)];
+      } while (newItem === exclusion);
+      return newItem;
+    }
   },
-  getRandomUncommon () {
-    return this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+
+  getRandomUncommon ( exclusion ) {
+    if (!exclusion) {
+      return this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+    }
+    else {
+      let newItem;
+      do {
+        newItem = this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+      } while (newItem === exclusion);
+      return newItem;
+    }
   },
-  getRandomRare () {
-    return this.raresList[getRandomInt(this.raresList.length)];
+
+  getRandomRare ( exclusion ) {
+    if (!exclusion) {
+      return this.raresList[getRandomInt(this.raresList.length)];
+    }
+    else {
+      let newItem;
+      do {
+        newItem = this.raresList[getRandomInt(this.raresList.length)];
+      } while (newItem === exclusion);
+      return newItem;
+    }
   },
+
   getRandomItem () {
     return this.itemList[getRandomInt(this.itemList.length)];
   },
+
   getItem (name) {
     return this.itemList.find(item => item.name === name);
   }
+
 }
 
 export default itemDB;

@@ -103,14 +103,39 @@ var itemDB = {
   raresList: raresList,
   uncommonsList: uncommonsList,
 
-  getRandomCommon: function getRandomCommon() {
-    return this.commonsList[getRandomInt(this.commonsList.length)];
+  getRandomCommon: function getRandomCommon(exclusion) {
+    //returns any random common item but the exclusion
+    if (!exclusion) {
+      return this.commonsList[getRandomInt(this.commonsList.length)];
+    } else {
+      var newItem = void 0;
+      do {
+        newItem = this.commonsList[getRandomInt(this.commonsList.length)];
+      } while (newItem === exclusion);
+      return newItem;
+    }
   },
-  getRandomUncommon: function getRandomUncommon() {
-    return this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+  getRandomUncommon: function getRandomUncommon(exclusion) {
+    if (!exclusion) {
+      return this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+    } else {
+      var newItem = void 0;
+      do {
+        newItem = this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+      } while (newItem === exclusion);
+      return newItem;
+    }
   },
-  getRandomRare: function getRandomRare() {
-    return this.raresList[getRandomInt(this.raresList.length)];
+  getRandomRare: function getRandomRare(exclusion) {
+    if (!exclusion) {
+      return this.raresList[getRandomInt(this.raresList.length)];
+    } else {
+      var newItem = void 0;
+      do {
+        newItem = this.raresList[getRandomInt(this.raresList.length)];
+      } while (newItem === exclusion);
+      return newItem;
+    }
   },
   getRandomItem: function getRandomItem() {
     return this.itemList[getRandomInt(this.itemList.length)];
@@ -135,19 +160,15 @@ var _Player = __webpack_require__(2);
 
 var _ItemLibrary = __webpack_require__(0);
 
-
 var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var player1 = (0, _Player.createPlayer)({ id: 1, name: "Spencer" });
+
 player1.pickUpItem(_ItemLibrary2.default.getRandomCommon());
 player1.pickUpItem(_ItemLibrary2.default.getItem("dark orb"));
-player1.transmuteItem(_ItemLibrary2.default.getItem("dark orb"));
-
-for (var i = 0; i < 20; i++) {
-  console.log(_ItemLibrary2.default.getRandomRare());
-}
+player1.transmuteItem("dark orb");
 
 console.dir(player1.inventory);
 
@@ -156,7 +177,6 @@ console.dir(player1.inventory);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-
 
 
 var _Logic = __webpack_require__(3);
@@ -203,27 +223,26 @@ function createPlayer(_ref) {
       }
     },
     pickUpItem: function pickUpItem(item) {
-      var the_item = this.inventory.find(function (element) {
-        return element.name === item.name;
-      });
+      //Use item for new or exterior items
+      var the_item = this.getPlayerItem(item.name);
       if (the_item === undefined) {
         this.inventory.push(Object.assign({}, item));
       } else {
-        the_item.charge += item.charge;
+        the_item.charges += item.charges;
       }
     },
-    useItem: function useItem(item) {
+    useItem: function useItem(name) {
+      //Use name for already owned items
       //the item used as the argument should be the name of the item
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
-      var the_item = this.inventory.find(function (element) {
-        return element.name === item;
-      });
-
-      this.triggerItemEffect(the_item);
-      if (the_item.charge === 0) {
-        var deleted_index = this.inventory.indexOf(the_item);
-        this.inventory.splice(deleted_index, 1);
+      var the_item = this.getPlayerItem(name);
+      if (the_item !== undefined) {
+        this.triggerEffect(the_item);
+        if (the_item.charges === 0) {
+          var deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
+          this.inventory.splice(deleted_index, 1); //or leave it in the inventory
+        } //with no charges?
       }
     },
     triggerItemEffect: function triggerItemEffect(item) {
@@ -265,7 +284,7 @@ function createPlayer(_ref) {
         case "cursed portal":
           if (this.sanity < .5) {
             //no effect
-            item.charge++;
+            item.charges++;
           } else {
             //give player choice to go to somewhere
             //that choice will return an x, y coordinate
@@ -279,36 +298,38 @@ function createPlayer(_ref) {
       }
     },
     rechargeItem: function rechargeItem(item) {
-      var the_item = this.inventory.find(function (element) {
-        return element.name === item;
-      });
+      var the_item = this.getPlayerItem(item.name);
       if (the_item !== undefined) {
         the_item.setCharges(item.charges);
       }
     },
-    transmuteItem: function transmuteItem(item) {
-      //Removes an item from your inventory and returns a new one of the same rarity
-      var the_item = this.inventory.find(function (element) {
-        return element.name === item;
-      });
+    transmuteItem: function transmuteItem(name) {
+      //Removes an item from your inventory and returns a different one of the same rarity
+      var the_item = this.getPlayerItem(name);
       if (the_item !== undefined) {
         var itemIndex = this.inventory.indexOf(the_item);
         var rarity = the_item.rarity;
         switch (rarity) {
           case "common":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+            this.pickUpItem(_ItemLibrary2.default.getRandomCommon(the_item));
             break;
           case "uncommon":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+            this.pickUpItem(_ItemLibrary2.default.getRandomUncommon(the_item));
             break;
           case "rare":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(_ItemLibrary2.default.getRandomRare());
+            this.pickUpItem(_ItemLibrary2.default.getRandomRare(the_item));
             break;
         }
       }
+    },
+    getPlayerItem: function getPlayerItem(name) {
+      var the_item = this.inventory.find(function (element) {
+        return element.name === name;
+      });
+      return the_item;
     }
   };
 };

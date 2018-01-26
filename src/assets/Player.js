@@ -34,29 +34,25 @@ function createPlayer ({...args}) {
       }
     },
 
-    pickUpItem (item) {
-      let the_item = this.inventory.find(function(element){
-        return element.name === item.name;
-      });
+    pickUpItem (item) { //Use item for new or exterior items
+      const the_item = this.getPlayerItem(item.name);
       if (the_item === undefined) {
         this.inventory.push(Object.assign({}, item));
       }
       else {
-        the_item.charge += item.charge;
+        the_item.charges += item.charges;
       }
     },
 
-    useItem (item) {
+    useItem (name) { //Use name for already owned items
       //the item used as the argument should be the name of the item
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
-      let the_item = this.inventory.find(function(element){
-        return element.name === item;
-      });
+      const the_item = this.getPlayerItem(name);
       if (the_item !== undefined) {
         this.triggerEffect(the_item);
-        if (the_item.charge === 0) {
-          let deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
+        if (the_item.charges === 0) {
+          const deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
           this.inventory.splice(deleted_index, 1);              //or leave it in the inventory
         }                                                       //with no charges?
       }
@@ -105,7 +101,7 @@ function createPlayer ({...args}) {
         case "cursed portal":
           if (this.sanity < .5) {
             //no effect
-            item.charge++;
+            item.charges++;
           }
           else {
             //give player choice to go to somewhere
@@ -121,36 +117,39 @@ function createPlayer ({...args}) {
     },
 
     rechargeItem (item) {
-      let the_item = this.inventory.find(function(element){
-        return element.name === item;
-      });
+      const the_item = this.getPlayerItem(item.name);
       if (the_item !== undefined) {
         the_item.setCharges(item.charges);
       }
     },
 
-    transmuteItem (item) { //Removes an item from your inventory and returns a new one of the same rarity
-      let the_item = this.inventory.find(function(element){
-        return element.name === item;
-      });
+    transmuteItem (name) { //Removes an item from your inventory and returns a different one of the same rarity
+      const the_item = this.getPlayerItem(name);
       if (the_item !== undefined) {
-        let itemIndex = this.inventory.indexOf(the_item);
-        let rarity = the_item.rarity;
+        const itemIndex = this.inventory.indexOf(the_item);
+        const rarity = the_item.rarity;
         switch (rarity) {
           case "common":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(itemDB.getRandomCommon());
+            this.pickUpItem(itemDB.getRandomCommon(the_item));
             break;
           case "uncommon":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(itemDB.getRandomCommon());
+            this.pickUpItem(itemDB.getRandomUncommon(the_item));
             break;
           case "rare":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(itemDB.getRandomRare());
+            this.pickUpItem(itemDB.getRandomRare(the_item));
             break;
         }
       }
+    },
+
+    getPlayerItem (name) {
+      const the_item = this.inventory.find(function(element){
+        return element.name === name;
+      });
+      return the_item;
     }
   });
 };
