@@ -23,12 +23,24 @@ const raresList = itemList.filter(item => item.rarity === "rare");
 const itemDB = {
   itemList,
   commonsList,
-  uncommonsList,
   raresList,
+  uncommonsList,
 
   getRandomCommon () {
-    return commonsList[getRandomInt(commonsList.length)];
+    return this.commonsList[getRandomInt(this.commonsList.length)];
   },
-};
+  getRandomUncommon () {
+    return this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+  },
+  getRandomRare () {
+    return this.raresList[getRandomInt(this.raresList.length)];
+  },
+  getRandomItem () {
+    return this.itemList[getRandomInt(this.itemList.length)];
+  },
+  getItem (name) {
+    return this.itemList.find(item => item.name === name);
+  }
+}
 
 export default itemDB;

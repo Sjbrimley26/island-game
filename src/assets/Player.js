@@ -1,4 +1,5 @@
 import { roll_the_dice, lucky_roll } from './Logic'
+import itemDB from './ItemLibrary';
 
 function createPlayer ({...args}) {
   return ({
@@ -52,10 +53,12 @@ function createPlayer ({...args}) {
       let the_item = this.inventory.find(function(element){
         return element.name === item;
       });
-      this.triggerItemEffect(the_item);
-      if (the_item.charge === 0) {
-        let deleted_index = this.inventory.indexOf(the_item);
-        this.inventory.splice(deleted_index, 1);
+      if (the_item !== undefined) {
+        this.triggerEffect(the_item);
+        if (the_item.charge === 0) {
+          let deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
+          this.inventory.splice(deleted_index, 1);              //or leave it in the inventory
+        }                                                       //with no charges?
       }
     },
 
@@ -114,6 +117,39 @@ function createPlayer ({...args}) {
             this.changeSanity(-2);
           }
           break;
+      }
+    },
+
+    rechargeItem (item) {
+      let the_item = this.inventory.find(function(element){
+        return element.name === item;
+      });
+      if (the_item !== undefined) {
+        the_item.setCharges(item.charges);
+      }
+    },
+
+    transmuteItem (item) { //Removes an item from your inventory and returns a new one of the same rarity
+      let the_item = this.inventory.find(function(element){
+        return element.name === item;
+      });
+      if (the_item !== undefined) {
+        let itemIndex = this.inventory.indexOf(the_item);
+        let rarity = the_item.rarity;
+        switch (rarity) {
+          case "common":
+            this.inventory.splice(itemIndex, 1);
+            this.pickUpItem(itemDB.getRandomCommon());
+            break;
+          case "uncommon":
+            this.inventory.splice(itemIndex, 1);
+            this.pickUpItem(itemDB.getRandomCommon());
+            break;
+          case "rare":
+            this.inventory.splice(itemIndex, 1);
+            this.pickUpItem(itemDB.getRandomRare());
+            break;
+        }
       }
     }
   });

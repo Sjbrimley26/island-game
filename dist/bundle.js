@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,17 +70,59 @@
 "use strict";
 
 
-var _Player = __webpack_require__(1);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-var _ItemLibrary = __webpack_require__(3);
+var _Item = __webpack_require__(4);
 
-var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var rabbit_foot = (0, _Item.createChargedItem)("rabbit foot", "common");
+var fate_coin = (0, _Item.createChargedItem)("coin of fate", "uncommon", 3);
+var dark_orb = (0, _Item.createChargedItem)("dark orb", "rare", 4);
+var cursed_portal = (0, _Item.createChargedItem)("cursed portal", "rare");
 
-var player1 = (0, _Player.createPlayer)({ id: 1, name: "Spencer" });
+var itemList = [rabbit_foot, fate_coin, dark_orb, cursed_portal];
 
-console.dir(player1.inventory);
+var commonsList = itemList.filter(function (item) {
+  return item.rarity === "common";
+});
+var uncommonsList = itemList.filter(function (item) {
+  return item.rarity === "uncommon";
+});
+var raresList = itemList.filter(function (item) {
+  return item.rarity === "rare";
+});
+
+var itemDB = {
+  itemList: itemList,
+  commonsList: commonsList,
+  raresList: raresList,
+  uncommonsList: uncommonsList,
+
+  getRandomCommon: function getRandomCommon() {
+    return this.commonsList[getRandomInt(this.commonsList.length)];
+  },
+  getRandomUncommon: function getRandomUncommon() {
+    return this.uncommonsList[getRandomInt(this.uncommonsList.length)];
+  },
+  getRandomRare: function getRandomRare() {
+    return this.raresList[getRandomInt(this.raresList.length)];
+  },
+  getRandomItem: function getRandomItem() {
+    return this.itemList[getRandomInt(this.itemList.length)];
+  },
+  getItem: function getItem(name) {
+    return this.itemList.find(function (item) {
+      return item.name === name;
+    });
+  }
+};
+
+exports.default = itemDB;
 
 /***/ }),
 /* 1 */
@@ -89,7 +131,41 @@ console.dir(player1.inventory);
 "use strict";
 
 
-var _Logic = __webpack_require__(2);
+var _Player = __webpack_require__(2);
+
+var _ItemLibrary = __webpack_require__(0);
+
+
+var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var player1 = (0, _Player.createPlayer)({ id: 1, name: "Spencer" });
+player1.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+player1.pickUpItem(_ItemLibrary2.default.getItem("dark orb"));
+player1.transmuteItem(_ItemLibrary2.default.getItem("dark orb"));
+
+for (var i = 0; i < 20; i++) {
+  console.log(_ItemLibrary2.default.getRandomRare());
+}
+
+console.dir(player1.inventory);
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+
+var _Logic = __webpack_require__(3);
+
+var _ItemLibrary = __webpack_require__(0);
+
+var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
@@ -143,6 +219,7 @@ function createPlayer(_ref) {
       var the_item = this.inventory.find(function (element) {
         return element.name === item;
       });
+
       this.triggerItemEffect(the_item);
       if (the_item.charge === 0) {
         var deleted_index = this.inventory.indexOf(the_item);
@@ -200,6 +277,38 @@ function createPlayer(_ref) {
           }
           break;
       }
+    },
+    rechargeItem: function rechargeItem(item) {
+      var the_item = this.inventory.find(function (element) {
+        return element.name === item;
+      });
+      if (the_item !== undefined) {
+        the_item.setCharges(item.charges);
+      }
+    },
+    transmuteItem: function transmuteItem(item) {
+      //Removes an item from your inventory and returns a new one of the same rarity
+      var the_item = this.inventory.find(function (element) {
+        return element.name === item;
+      });
+      if (the_item !== undefined) {
+        var itemIndex = this.inventory.indexOf(the_item);
+        var rarity = the_item.rarity;
+        switch (rarity) {
+          case "common":
+            this.inventory.splice(itemIndex, 1);
+            this.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+            break;
+          case "uncommon":
+            this.inventory.splice(itemIndex, 1);
+            this.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+            break;
+          case "rare":
+            this.inventory.splice(itemIndex, 1);
+            this.pickUpItem(_ItemLibrary2.default.getRandomRare());
+            break;
+        }
+      }
     }
   };
 };
@@ -209,7 +318,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -229,53 +338,6 @@ module.exports = {
   roll_the_dice: roll_the_dice,
   lucky_roll: lucky_roll
 };
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _Item = __webpack_require__(4);
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * Math.floor(max));
-}
-
-var rabbit_foot = (0, _Item.createChargedItem)("rabbit foot", "common");
-var fate_coin = (0, _Item.createChargedItem)("coin of fate", "uncommon", 3);
-var dark_orb = (0, _Item.createChargedItem)("dark orb", "rare", 4);
-var cursed_portal = (0, _Item.createChargedItem)("cursed portal", "rare");
-
-var itemList = [rabbit_foot, fate_coin, dark_orb, cursed_portal];
-
-var commonsList = itemList.filter(function (item) {
-  return item.rarity === "common";
-});
-var uncommonsList = itemList.filter(function (item) {
-  return item.rarity === "uncommon";
-});
-var raresList = itemList.filter(function (item) {
-  return item.rarity === "rare";
-});
-
-var itemDB = {
-  itemList: itemList,
-  commonsList: commonsList,
-  uncommonsList: uncommonsList,
-  raresList: raresList,
-
-  getRandomCommon: function getRandomCommon() {
-    return commonsList[getRandomInt(commonsList.length)];
-  }
-};
-
-exports.default = itemDB;
 
 /***/ }),
 /* 4 */
@@ -316,7 +378,9 @@ function createChargedItem(name, rarity) {
   var charges = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
 
   var item = withCharges(createItem(name, rarity));
-  item.setCharges(charges);
+  if (charges !== 1) {
+    item.setCharges(charges);
+  }
   return item;
 };
 

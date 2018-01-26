@@ -28,7 +28,9 @@ function withCharges (item) {
 
 function createChargedItem (name, rarity, charges = 1) {
     let item = withCharges(createItem(name, rarity));
-    item.setCharges(charges);
+    if (charges !== 1) {
+      item.setCharges(charges);
+    }
     return item;
 };
 
