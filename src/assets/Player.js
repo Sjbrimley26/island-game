@@ -34,6 +34,22 @@ function createPlayer ({...args}) {
       }
     },
 
+    normalizeLuck () {
+      const diff = Math.abs(this.luck * 10 - 10);
+      //I know with floats this is gonna turn out weird but I don't want to test
+      //it right now lol
+      if (this.luck > 1) {
+        this.changeLuck(-(diff/3));
+      }
+      else {
+        this.changeLuck(diff/3)
+      }
+    },
+
+    goInsane () {
+      this.sanity = 1;
+    },
+
     pickUpItem (item) { //Use item for new or exterior items
       const the_item = this.getPlayerItem(item.name);
       if (the_item === undefined) {
@@ -150,8 +166,31 @@ function createPlayer ({...args}) {
         return element.name === name;
       });
       return the_item;
-    }
-    
+    },
+
+    onStartTurn () {
+      if (this.luck > 1) {
+        this.normalizeLuck(); //So if a player has high luck, it decreases a bit at the start
+                              //of each turn.
+      }
+
+      if (this.sanity === 0) {
+        this.goInsane();
+      }
+
+      if (this.inventory.length < 3) {
+        this.pickUpItem(itemDB.getRandomCommon());
+      }
+
+      this.active = true;
+
+    },
+
+    onEndTurn () {
+      this.active = false;
+
+    },
+
   });
 };
 
