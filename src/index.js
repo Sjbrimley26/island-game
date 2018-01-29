@@ -1,3 +1,4 @@
+import "babel-polyfill";
 import { createPlayer } from './assets/Player.js';
 import itemDB from './assets/ItemLibrary';
 

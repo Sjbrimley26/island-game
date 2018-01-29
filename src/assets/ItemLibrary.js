@@ -26,7 +26,7 @@ const itemDB = {
   raresList,
   uncommonsList,
 
-  getRandomCommon ( exclusion) { //returns any random common item but the exclusion
+  getRandomCommon ( exclusion ) { //returns any random common item but the exclusion
     if (!exclusion) {
       return this.commonsList[getRandomInt(this.commonsList.length)];
     }

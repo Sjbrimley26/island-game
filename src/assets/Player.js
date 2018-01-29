@@ -151,6 +151,7 @@ function createPlayer ({...args}) {
       });
       return the_item;
     }
+    
   });
 };
 
