@@ -237,15 +237,15 @@ function createPlayer ({...args}) {
         switch (rarity) {
           case "common":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(itemDB.getRandomCommon(the_item));
+            this.pickUpItem(itemDB.getRandomCommon(the_item.name));
             break;
           case "uncommon":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(itemDB.getRandomUncommon(the_item));
+            this.pickUpItem(itemDB.getRandomUncommon(the_item.name));
             break;
           case "rare":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(itemDB.getRandomRare(the_item));
+            this.pickUpItem(itemDB.getRandomRare(the_item.name));
             break;
         }
       }

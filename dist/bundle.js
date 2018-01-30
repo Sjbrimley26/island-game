@@ -3789,7 +3789,7 @@ var itemDB = {
       var newItem = void 0;
       do {
         newItem = this.commonsList[getRandomInt(this.commonsList.length)];
-      } while (newItem === exclusion);
+      } while (newItem.name === exclusion);
       return newItem;
     }
   },
@@ -3800,7 +3800,7 @@ var itemDB = {
       var newItem = void 0;
       do {
         newItem = this.uncommonsList[getRandomInt(this.uncommonsList.length)];
-      } while (newItem === exclusion);
+      } while (newItem.name === exclusion);
       return newItem;
     }
   },
@@ -3811,7 +3811,7 @@ var itemDB = {
       var newItem = void 0;
       do {
         newItem = this.raresList[getRandomInt(this.raresList.length)];
-      } while (newItem === exclusion);
+      } while (newItem.name === exclusion);
       return newItem;
     }
   },
@@ -9374,15 +9374,15 @@ function createPlayer(_ref) {
         switch (rarity) {
           case "common":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(_ItemLibrary2.default.getRandomCommon(the_item));
+            this.pickUpItem(_ItemLibrary2.default.getRandomCommon(the_item.name));
             break;
           case "uncommon":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(_ItemLibrary2.default.getRandomUncommon(the_item));
+            this.pickUpItem(_ItemLibrary2.default.getRandomUncommon(the_item.name));
             break;
           case "rare":
             this.inventory.splice(itemIndex, 1);
-            this.pickUpItem(_ItemLibrary2.default.getRandomRare(the_item));
+            this.pickUpItem(_ItemLibrary2.default.getRandomRare(the_item.name));
             break;
         }
       }

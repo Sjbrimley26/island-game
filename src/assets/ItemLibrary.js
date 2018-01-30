@@ -34,7 +34,7 @@ const itemDB = {
       let newItem;
       do {
         newItem = this.commonsList[getRandomInt(this.commonsList.length)];
-      } while (newItem === exclusion);
+      } while (newItem.name === exclusion);
       return newItem;
     }
   },
@@ -47,7 +47,7 @@ const itemDB = {
       let newItem;
       do {
         newItem = this.uncommonsList[getRandomInt(this.uncommonsList.length)];
-      } while (newItem === exclusion);
+      } while (newItem.name === exclusion);
       return newItem;
     }
   },
@@ -60,7 +60,7 @@ const itemDB = {
       let newItem;
       do {
         newItem = this.raresList[getRandomInt(this.raresList.length)];
-      } while (newItem === exclusion);
+      } while (newItem.name === exclusion);
       return newItem;
     }
   },
