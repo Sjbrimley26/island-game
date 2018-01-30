@@ -156,9 +156,7 @@ function createPlayer ({...args}) {
       if (player.inventory.length > 0) {
         const itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
         const itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
-        console.dir(this.inventory);
         this.pickUpItem(itemToTake[0]);
-        console.dir(this.inventory);
         player.pickUpItem(itemToGive[0]);
       }
     },

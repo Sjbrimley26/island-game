@@ -9128,16 +9128,12 @@ var player2 = (0, _Player.createPlayer)({ id: 2, name: "Fred" });
 
 player1.pickUpItem(_ItemLibrary2.default.getRandomCommon());
 player1.pickUpItem(_ItemLibrary2.default.getItem("dark orb"));
+
 player1.transmuteItem("dark orb");
-player1.inventory.forEach(function (item) {
-  return console.log(item);
-});
+
 player2.stealRandomItem(player1);
 
 player2.tradeRandomItem(player1);
-console.log("Trade Results");
-console.dir(player1.inventory);
-console.dir(player2.inventory);
 
 /***/ }),
 /* 330 */
@@ -9302,9 +9298,7 @@ function createPlayer(_ref) {
       if (player.inventory.length > 0) {
         var itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
         var itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
-        console.dir(this.inventory);
         this.pickUpItem(itemToTake[0]);
-        console.dir(this.inventory);
         player.pickUpItem(itemToGive[0]);
       }
     },
