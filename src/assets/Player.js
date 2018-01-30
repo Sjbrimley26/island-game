@@ -1,6 +1,10 @@
 import { roll_the_dice, lucky_roll } from './Logic'
 import itemDB from './ItemLibrary';
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
 function createPlayer ({...args}) {
   return ({
     luck: 0,
@@ -9,6 +13,10 @@ function createPlayer ({...args}) {
     id: args.id,
     name: args.name,
     active: false,
+    turn: 0,
+    status: [],
+    hasMoved: false,
+    hasUsedItem: false,
 
     changeSanity (amount) {
       //amount should be between -1 and 1
@@ -36,27 +44,26 @@ function createPlayer ({...args}) {
 
     normalizeLuck () {
       const diff = Math.abs(this.luck * 10 - 10);
-      //I know with floats this is gonna turn out weird but I don't want to test
-      //it right now lol
       if (this.luck > 1) {
-        this.changeLuck(-(diff/3));
+        this.changeLuck( - ( Math.round(diff * 10/3)) / 10 );
       }
       else {
-        this.changeLuck(diff/3)
+        this.changeLuck( ( Math.round(diff * 10/3)) / 10 );
       }
     },
 
     goInsane () {
       this.sanity = 1;
+      this.addStatusEffect("stunned");
     },
 
     pickUpItem (item) { //Use item for new or exterior items
       const the_item = this.getPlayerItem(item.name);
       if (the_item === undefined) {
-        this.inventory.push(Object.assign({}, item));
+        this.inventory.push({...item});
       }
       else {
-        the_item.charges += item.charges;
+        the_item.addCharges(item.charges);
       }
     },
 
@@ -65,8 +72,8 @@ function createPlayer ({...args}) {
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
       const the_item = this.getPlayerItem(name);
-      if (the_item !== undefined) {
-        this.triggerEffect(the_item);
+      if (the_item !== undefined && (!this.hasUsedItem || the_item.isFree)) {
+        this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
           const deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
           this.inventory.splice(deleted_index, 1);              //or leave it in the inventory
@@ -76,6 +83,7 @@ function createPlayer ({...args}) {
 
     triggerItemEffect(item) {
       item.use();
+      this.hasUsedItem = true;
 
       switch(item.name) {
 
@@ -129,21 +137,87 @@ function createPlayer ({...args}) {
             this.changeSanity(-2);
           }
           break;
+
+        case "magic batteries":
+          let i; //Now how to select...?
+          this.inventory[i].addCharges(2);
+          break;
       }
+    },
+
+    addStatusEffect (effect) {
+      if (this.status.indexOf(effect) === -1) {
+        this.status.push(effect);
+      }
+    },
+
+    triggerStatusEffect (effect) {
+      let effectArr = effect.split(" ");
+      if (effectArr.length === 1) {
+        switch (effect) {
+          case "stunned":
+            this.hasMoved = true;
+            this.hasUsedItem = true;
+            this.changeLuck(.02);
+            break;
+          case "trapped":
+            this.hasMoved = true;
+            break;
+          case "tied":
+            this.hasUsedItem = true;
+            break;
+          case "random recharge":
+            this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
+            break;
+        }
+      }
+      else {
+        switch (effectArr[0]) {
+          case "draw": // so you could do "draw 2" for example
+            for (let i = 0; i < parseInt(effectArr[1]); i++) {
+              if (effectArr[2]) { // or "draw 2 common"
+                switch (effectArr[2]) {
+                  case "common":
+                    this.pickUpItem(itemDB.getRandomCommon());
+                    break;
+                  case "uncommon":
+                    this.pickUpItem(itemDB.getRandomUncommon());
+                    break;
+                  case "rare":
+                    this.pickUpItem(itemDB.getRandomRare());
+                    break;
+                }
+              }
+              else {
+                this.pickUpItem(itemDB.getRandomItem());
+              }
+            }
+            break;
+        }
+      }
+
     },
 
     rechargeItem (item) {
       const the_item = this.getPlayerItem(item.name);
       if (the_item !== undefined) {
-        the_item.setCharges(item.charges);
+        if (the_item.charges < the_item.initialCharges) {
+          the_item.setCharges(item.initialCharges);
+        }
       }
     },
 
-    transmuteItem (name) { //Removes an item from your inventory and returns a different one of the same rarity
+    transmuteItem (name, optionalRarity) { //Removes an item from your inventory and returns a different one of the same rarity
       const the_item = this.getPlayerItem(name);
       if (the_item !== undefined) {
         const itemIndex = this.inventory.indexOf(the_item);
-        const rarity = the_item.rarity;
+        let rarity;
+        if (optionalRarity) {
+          rarity = optionalRarity;
+        }
+        else {
+          rarity = the_item.rarity;
+        }
         switch (rarity) {
           case "common":
             this.inventory.splice(itemIndex, 1);
@@ -169,6 +243,10 @@ function createPlayer ({...args}) {
     },
 
     onStartTurn () {
+      this.turn += 1;
+      this.hasUsedItem = false;
+      this.hasMoved = false;
+
       if (this.luck > 1) {
         this.normalizeLuck(); //So if a player has high luck, it decreases a bit at the start
                               //of each turn.
@@ -178,15 +256,29 @@ function createPlayer ({...args}) {
         this.goInsane();
       }
 
-      if (this.inventory.length < 3) {
-        this.pickUpItem(itemDB.getRandomCommon());
+      if (this.inventory.length < 6) {
+        if (this.turn <= 5) {
+          this.pickUpItem(itemDB.getRandomCommon());
+        }
+        else {
+          this.pickUpItem(itemDB.getRandomUncommon());
+        }
       }
+
+      this.status.forEach((effect) => {
+        this.triggerStatusEffect(effect);
+      });
+      this.status = [];
 
       this.active = true;
 
     },
 
     onEndTurn () {
+      if (this.inventory.length > 6) { //Should probably let them choose which to discard
+        this.inventory.splice(getRandomInt(this.inventory.length), 1);
+      }
+
       this.active = false;
 
     },

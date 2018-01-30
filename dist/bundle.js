@@ -3758,8 +3758,8 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-var rabbit_foot = (0, _Item.createChargedItem)("rabbit foot", "common");
-var fate_coin = (0, _Item.createChargedItem)("coin of fate", "uncommon", 3);
+var rabbit_foot = (0, _Item.createFreeChargedItem)("rabbit foot", "common");
+var fate_coin = (0, _Item.createFreeChargedItem)("coin of fate", "uncommon", 3);
 var dark_orb = (0, _Item.createChargedItem)("dark orb", "rare", 4);
 var cursed_portal = (0, _Item.createChargedItem)("cursed portal", "rare");
 
@@ -9128,8 +9128,11 @@ var player1 = (0, _Player.createPlayer)({ id: 1, name: "Spencer" });
 player1.pickUpItem(_ItemLibrary2.default.getRandomCommon());
 player1.pickUpItem(_ItemLibrary2.default.getItem("dark orb"));
 player1.transmuteItem("dark orb");
+player1.addStatusEffect("random recharge");
+player1.onStartTurn();
 
 console.dir(player1.inventory);
+console.dir(player1);
 
 /***/ }),
 /* 330 */
@@ -9137,6 +9140,8 @@ console.dir(player1.inventory);
 
 "use strict";
 
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _Logic = __webpack_require__(331);
 
@@ -9148,6 +9153,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
 function createPlayer(_ref) {
   var args = _objectWithoutProperties(_ref, []);
 
@@ -9158,6 +9167,10 @@ function createPlayer(_ref) {
     id: args.id,
     name: args.name,
     active: false,
+    turn: 0,
+    status: [],
+    hasMoved: false,
+    hasUsedItem: false,
 
     changeSanity: function changeSanity(amount) {
       //amount should be between -1 and 1
@@ -9181,13 +9194,25 @@ function createPlayer(_ref) {
         this.luck = -.5;
       }
     },
+    normalizeLuck: function normalizeLuck() {
+      var diff = Math.abs(this.luck * 10 - 10);
+      if (this.luck > 1) {
+        this.changeLuck(-Math.round(diff * 10 / 3) / 10);
+      } else {
+        this.changeLuck(Math.round(diff * 10 / 3) / 10);
+      }
+    },
+    goInsane: function goInsane() {
+      this.sanity = 1;
+      this.addStatusEffect("stunned");
+    },
     pickUpItem: function pickUpItem(item) {
       //Use item for new or exterior items
       var the_item = this.getPlayerItem(item.name);
       if (the_item === undefined) {
-        this.inventory.push(Object.assign({}, item));
+        this.inventory.push(_extends({}, item));
       } else {
-        the_item.charges += item.charges;
+        the_item.addCharges(item.charges);
       }
     },
     useItem: function useItem(name) {
@@ -9196,8 +9221,8 @@ function createPlayer(_ref) {
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
       var the_item = this.getPlayerItem(name);
-      if (the_item !== undefined) {
-        this.triggerEffect(the_item);
+      if (the_item !== undefined && (!this.hasUsedItem || the_item.isFree)) {
+        this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
           var deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
           this.inventory.splice(deleted_index, 1); //or leave it in the inventory
@@ -9206,6 +9231,7 @@ function createPlayer(_ref) {
     },
     triggerItemEffect: function triggerItemEffect(item) {
       item.use();
+      this.hasUsedItem = true;
 
       switch (item.name) {
 
@@ -9254,20 +9280,82 @@ function createPlayer(_ref) {
             this.changeSanity(-2);
           }
           break;
+
+        case "magic batteries":
+          var i = void 0; //Now how to select...?
+          this.inventory[i].addCharges(2);
+          break;
+      }
+    },
+    addStatusEffect: function addStatusEffect(effect) {
+      if (this.status.indexOf(effect) === -1) {
+        this.status.push(effect);
+      }
+    },
+    triggerStatusEffect: function triggerStatusEffect(effect) {
+      var effectArr = effect.split(" ");
+      if (effectArr.length === 1) {
+        switch (effect) {
+          case "stunned":
+            this.hasMoved = true;
+            this.hasUsedItem = true;
+            this.changeLuck(.02);
+            break;
+          case "trapped":
+            this.hasMoved = true;
+            break;
+          case "tied":
+            this.hasUsedItem = true;
+            break;
+          case "random recharge":
+            this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
+            break;
+        }
+      } else {
+        switch (effectArr[0]) {
+          case "draw":
+            // so you could do "draw 2" for example
+            for (var i = 0; i < parseInt(effectArr[1]); i++) {
+              if (effectArr[2]) {
+                // or "draw 2 common"
+                switch (effectArr[2]) {
+                  case "common":
+                    this.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+                    break;
+                  case "uncommon":
+                    this.pickUpItem(_ItemLibrary2.default.getRandomUncommon());
+                    break;
+                  case "rare":
+                    this.pickUpItem(_ItemLibrary2.default.getRandomRare());
+                    break;
+                }
+              } else {
+                this.pickUpItem(_ItemLibrary2.default.getRandomItem());
+              }
+            }
+            break;
+        }
       }
     },
     rechargeItem: function rechargeItem(item) {
       var the_item = this.getPlayerItem(item.name);
       if (the_item !== undefined) {
-        the_item.setCharges(item.charges);
+        if (the_item.charges < the_item.initialCharges) {
+          the_item.setCharges(item.initialCharges);
+        }
       }
     },
-    transmuteItem: function transmuteItem(name) {
+    transmuteItem: function transmuteItem(name, optionalRarity) {
       //Removes an item from your inventory and returns a different one of the same rarity
       var the_item = this.getPlayerItem(name);
       if (the_item !== undefined) {
         var itemIndex = this.inventory.indexOf(the_item);
-        var rarity = the_item.rarity;
+        var rarity = void 0;
+        if (optionalRarity) {
+          rarity = optionalRarity;
+        } else {
+          rarity = the_item.rarity;
+        }
         switch (rarity) {
           case "common":
             this.inventory.splice(itemIndex, 1);
@@ -9289,6 +9377,45 @@ function createPlayer(_ref) {
         return element.name === name;
       });
       return the_item;
+    },
+    onStartTurn: function onStartTurn() {
+      var _this = this;
+
+      this.turn += 1;
+      this.hasUsedItem = false;
+      this.hasMoved = false;
+
+      if (this.luck > 1) {
+        this.normalizeLuck(); //So if a player has high luck, it decreases a bit at the start
+        //of each turn.
+      }
+
+      if (this.sanity === 0) {
+        this.goInsane();
+      }
+
+      if (this.inventory.length < 6) {
+        if (this.turn <= 5) {
+          this.pickUpItem(_ItemLibrary2.default.getRandomCommon());
+        } else {
+          this.pickUpItem(_ItemLibrary2.default.getRandomUncommon());
+        }
+      }
+
+      this.status.forEach(function (effect) {
+        _this.triggerStatusEffect(effect);
+      });
+      this.status = [];
+
+      this.active = true;
+    },
+    onEndTurn: function onEndTurn() {
+      if (this.inventory.length > 6) {
+        //Should probably let them choose which to discard
+        this.inventory.splice(getRandomInt(this.inventory.length), 1);
+      }
+
+      this.active = false;
     }
   };
 };
@@ -9346,10 +9473,19 @@ function createItem(name, rarity) {
 };
 
 function withCharges(item) {
+  var charges = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+
   return _extends({}, item, {
-    "charges": 1,
+    "charges": charges,
+    "initialCharges": charges,
     setCharges: function setCharges(charges) {
       this.charges = charges;
+    },
+    addCharges: function addCharges(charges) {
+      this.charges += charges;
+      if (this.charges > this.initialCharges * 2) {
+        this.charges = this.initialCharges * 2;
+      }
     }
   });
 };
@@ -9357,17 +9493,23 @@ function withCharges(item) {
 function createChargedItem(name, rarity) {
   var charges = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
 
-  var item = withCharges(createItem(name, rarity));
-  if (charges !== 1) {
-    item.setCharges(charges);
-  }
+  var item = withCharges(createItem(name, rarity), charges);
+  return item;
+};
+
+function createFreeChargedItem(name, rarity) {
+  var charges = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+
+  var item = withCharges(createItem(name, rarity), charges);
+  item.isFree = true;
   return item;
 };
 
 module.exports = {
   createItem: createItem,
   withCharges: withCharges,
-  createChargedItem: createChargedItem
+  createChargedItem: createChargedItem,
+  createFreeChargedItem: createFreeChargedItem
 };
 
 /***/ })

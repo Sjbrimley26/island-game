@@ -1,11 +1,11 @@
-import { createItem , withCharges , createChargedItem } from './Item';
+import { createItem , withCharges , createChargedItem, createFreeChargedItem } from './Item';
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-const rabbit_foot = createChargedItem("rabbit foot", "common");
-const fate_coin = createChargedItem("coin of fate", "uncommon", 3);
+const rabbit_foot = createFreeChargedItem("rabbit foot", "common");
+const fate_coin = createFreeChargedItem("coin of fate", "uncommon", 3);
 const dark_orb = createChargedItem("dark orb", "rare", 4);
 const cursed_portal = createChargedItem("cursed portal", "rare");
 
