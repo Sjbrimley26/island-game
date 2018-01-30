@@ -9124,15 +9124,20 @@ var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var player1 = (0, _Player.createPlayer)({ id: 1, name: "Spencer" });
+var player2 = (0, _Player.createPlayer)({ id: 2, name: "Fred" });
 
 player1.pickUpItem(_ItemLibrary2.default.getRandomCommon());
 player1.pickUpItem(_ItemLibrary2.default.getItem("dark orb"));
 player1.transmuteItem("dark orb");
-player1.addStatusEffect("random recharge");
-player1.onStartTurn();
+player1.inventory.forEach(function (item) {
+  return console.log(item);
+});
+player2.stealRandomItem(player1);
 
+player2.tradeRandomItem(player1);
+console.log("Trade Results");
 console.dir(player1.inventory);
-console.dir(player1);
+console.dir(player2.inventory);
 
 /***/ }),
 /* 330 */
@@ -9221,7 +9226,7 @@ function createPlayer(_ref) {
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
       var the_item = this.getPlayerItem(name);
-      if (the_item !== undefined && (!this.hasUsedItem || the_item.isFree)) {
+      if (the_item !== undefined && (!this.hasUsedItem || the_item.isFree && !the_item.hasBeenUsed)) {
         this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
           var deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
@@ -9285,6 +9290,22 @@ function createPlayer(_ref) {
           var i = void 0; //Now how to select...?
           this.inventory[i].addCharges(2);
           break;
+      }
+    },
+    stealRandomItem: function stealRandomItem(player) {
+      if (player.inventory.length > 0) {
+        var stolenItem = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        this.pickUpItem(stolenItem[0]);
+      }
+    },
+    tradeRandomItem: function tradeRandomItem(player) {
+      if (player.inventory.length > 0) {
+        var itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
+        var itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        console.dir(this.inventory);
+        this.pickUpItem(itemToTake[0]);
+        console.dir(this.inventory);
+        player.pickUpItem(itemToGive[0]);
       }
     },
     addStatusEffect: function addStatusEffect(effect) {
@@ -9415,6 +9436,12 @@ function createPlayer(_ref) {
         this.inventory.splice(getRandomInt(this.inventory.length), 1);
       }
 
+      for (item in this.inventory) {
+        if (item.hasOwnProperty("hasBeenUsed")) {
+          item.hasBeenUsed = false;
+        }
+      }
+
       this.active = false;
     }
   };
@@ -9466,6 +9493,10 @@ function createItem(name, rarity) {
           this.charges--;
         }
       }
+
+      if (this.hasOwnProperty("hasBeenUsed")) {
+        this.hasBeenUsed = true;
+      }
       //Normal "Use" Case
       console.log(this.name + " was used");
     }
@@ -9502,6 +9533,7 @@ function createFreeChargedItem(name, rarity) {
 
   var item = withCharges(createItem(name, rarity), charges);
   item.isFree = true;
+  item.hasBeenUsed = false;
   return item;
 };
 

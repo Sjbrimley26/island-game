@@ -9,6 +9,10 @@ function createItem (name, rarity) {
           this.charges--;
         }
       }
+      
+      if (this.hasOwnProperty("hasBeenUsed")) {
+        this.hasBeenUsed = true;
+      }
       //Normal "Use" Case
       console.log(`${this.name} was used`);
     }
@@ -41,6 +45,7 @@ function createChargedItem (name, rarity, charges = 1) {
 function createFreeChargedItem (name, rarity, charges = 1) {
   let item = withCharges(createItem(name, rarity), charges);
   item.isFree = true;
+  item.hasBeenUsed = false;
   return item;
 };
 

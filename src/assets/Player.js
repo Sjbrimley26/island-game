@@ -72,7 +72,7 @@ function createPlayer ({...args}) {
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
       const the_item = this.getPlayerItem(name);
-      if (the_item !== undefined && (!this.hasUsedItem || the_item.isFree)) {
+      if (the_item !== undefined && (!this.hasUsedItem || (the_item.isFree && !the_item.hasBeenUsed))) {
         this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
           const deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
@@ -142,6 +142,24 @@ function createPlayer ({...args}) {
           let i; //Now how to select...?
           this.inventory[i].addCharges(2);
           break;
+      }
+    },
+
+    stealRandomItem (player) {
+      if (player.inventory.length > 0) {
+        const stolenItem = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        this.pickUpItem(stolenItem[0]);
+      }
+    },
+
+    tradeRandomItem (player) {
+      if (player.inventory.length > 0) {
+        const itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
+        const itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        console.dir(this.inventory);
+        this.pickUpItem(itemToTake[0]);
+        console.dir(this.inventory);
+        player.pickUpItem(itemToGive[0]);
       }
     },
 
@@ -277,6 +295,12 @@ function createPlayer ({...args}) {
     onEndTurn () {
       if (this.inventory.length > 6) { //Should probably let them choose which to discard
         this.inventory.splice(getRandomInt(this.inventory.length), 1);
+      }
+
+      for (item in this.inventory) {
+        if (item.hasOwnProperty("hasBeenUsed")) {
+          item.hasBeenUsed = false;
+        }
       }
 
       this.active = false;
