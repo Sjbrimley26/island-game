@@ -8,12 +8,16 @@ const rabbit_foot = createFreeChargedItem("rabbit foot", "common");
 const fate_coin = createFreeChargedItem("coin of fate", "uncommon", 3);
 const dark_orb = createChargedItem("dark orb", "rare", 4);
 const cursed_portal = createChargedItem("cursed portal", "rare");
+const gelatinous_mass = createChargedItem("gelatinous mass", "uncommon");
+const magic_batteries = createFreeChargedItem("magic batteries", "uncommon");
 
 const itemList = [
   rabbit_foot,
   fate_coin,
   dark_orb,
-  cursed_portal
+  cursed_portal,
+  gelatinous_mass,
+  magic_batteries
 ];
 
 const commonsList = itemList.filter(item => item.rarity === "common");

@@ -75,9 +75,13 @@ function createPlayer ({...args}) {
       if (the_item !== undefined && (!this.hasUsedItem || (the_item.isFree && !the_item.hasBeenUsed))) {
         this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
-          const deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
-          this.inventory.splice(deleted_index, 1);              //or leave it in the inventory
-        }                                                       //with no charges?
+          const deleted_index = this.inventory.findIndex((item) => {
+            item.name === the_item.name;
+          });
+          if (deleted_index !== -1) {
+            this.inventory.splice(deleted_index, 1);
+          }
+        }
       }
     },
 
@@ -101,17 +105,18 @@ function createPlayer ({...args}) {
           break;
 
         case "dark orb":
-          if (lucky_roll(100, this) < 10) {
+          let diceRoll = lucky_roll(100, this);
+          if ( diceRoll < 10) {
             //critical failure
             this.changeLuck(.5);
             this.changeSanity(-1);
           }
-          else if (lucky_roll(100, this) < 50) {
+          else if (diceRoll < 50) {
             //fail
             this.changeLuck(.03);
             this.changeSanity(-.2);
           }
-          else if (lucky_roll(100, this) >= 98) {
+          else if (diceRoll >= 98) {
             //critical success
             this.changeLuck(-2);
             //something amazing I guess
@@ -142,6 +147,21 @@ function createPlayer ({...args}) {
           let i; //Now how to select...?
           this.inventory[i].addCharges(2);
           break;
+
+        case "gelatinous mass":
+          let diceRoll = lucky_roll(100, this);
+          let rarity;
+          if (diceRoll < 33) {
+            rarity = "common";
+          }
+          if (diceRoll >= 33 && diceRoll <= 85) {
+            rarity = "uncommon";
+          }
+          else {
+            rarity = "rare";
+          }
+          this.transmuteItem("gelatinous mass", rarity);
+          break;
       }
     },
 
@@ -152,10 +172,23 @@ function createPlayer ({...args}) {
       }
     },
 
-    tradeRandomItem (player) {
+    tradeRandomItem (player, giveIndex, takeIndex) {
       if (player.inventory.length > 0) {
-        const itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
-        const itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        let itemToGive;
+        let itemToTake;
+
+        if (giveIndex) {
+          itemToGive = this.inventory.splice(giveIndex, 1);
+        } else {
+          itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
+        }
+
+        if (takeIndex) {
+          itemToTake = player.inventory.splice(takeIndex, 1);
+        } else {
+          itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        }
+
         this.pickUpItem(itemToTake[0]);
         player.pickUpItem(itemToGive[0]);
       }
@@ -176,15 +209,26 @@ function createPlayer ({...args}) {
             this.hasUsedItem = true;
             this.changeLuck(.02);
             break;
+
           case "trapped":
             this.hasMoved = true;
             break;
+
           case "tied":
             this.hasUsedItem = true;
             break;
-          case "random recharge":
-            this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
+
+          case "paralyzed":
+            this.hasMoved = true;
+            this.hasUsedItem = true;
+            this.inventory.forEach((item) => {
+              if (item.hasOwnProperty("hasBeenUsed")) {
+                item.hasBeenUsed = true;
+              }
+            })
+            this.changeLuck(.05);
             break;
+
         }
       }
       else {
@@ -209,6 +253,11 @@ function createPlayer ({...args}) {
               }
             }
             break;
+          case "random":
+            if (effectArr[1] === "recharge") {
+              this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
+              break;
+            }
         }
       }
 
@@ -295,11 +344,11 @@ function createPlayer ({...args}) {
         this.inventory.splice(getRandomInt(this.inventory.length), 1);
       }
 
-      for (item in this.inventory) {
+      this.inventory.forEach((item) => {
         if (item.hasOwnProperty("hasBeenUsed")) {
           item.hasBeenUsed = false;
         }
-      }
+      });
 
       this.active = false;
 
