@@ -88,6 +88,7 @@ function createPlayer ({...args}) {
     triggerItemEffect(item) {
       item.use();
       this.hasUsedItem = true;
+      let diceRoll = lucky_roll(100, this);
 
       switch(item.name) {
 
@@ -105,7 +106,6 @@ function createPlayer ({...args}) {
           break;
 
         case "dark orb":
-          let diceRoll = lucky_roll(100, this);
           if ( diceRoll < 10) {
             //critical failure
             this.changeLuck(.5);
@@ -149,7 +149,6 @@ function createPlayer ({...args}) {
           break;
 
         case "gelatinous mass":
-          let diceRoll = lucky_roll(100, this);
           let rarity;
           if (diceRoll < 33) {
             rarity = "common";

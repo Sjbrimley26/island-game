@@ -3,16 +3,6 @@ function createItem (name, rarity) {
     name,
     rarity,
     use () {
-      if (this.hasOwnProperty("charges")) {
-        if (this.charges > 0) {
-          //Something AMAZING, I guess
-          this.charges--;
-        }
-      }
-      
-      if (this.hasOwnProperty("hasBeenUsed")) {
-        this.hasBeenUsed = true;
-      }
       //Normal "Use" Case
       console.log(`${this.name} was used`);
     }
@@ -20,8 +10,9 @@ function createItem (name, rarity) {
 };
 
 function withCharges (item, charges = 1) {
+  let { use, ...noUseItem } = item;
   return ({
-    ...item,
+    ...noUseItem,
     "charges": charges,
     "initialCharges": charges,
     setCharges (charges) {
@@ -32,21 +23,37 @@ function withCharges (item, charges = 1) {
       if (this.charges > (this.initialCharges * 2)) {
         this.charges = this.initialCharges * 2;
       }
+    },
+    use () {
+      if (this.charges > 0) {
+        //Something AMAZING, I guess
+        this.charges--;
+        console.log(`${this.name} was used`);
+      }
     }
 
   })
 };
 
 function createChargedItem (name, rarity, charges = 1) {
-    let item = withCharges(createItem(name, rarity), charges);
-    return item;
+    return withCharges(createItem(name, rarity), charges);
 };
 
 function createFreeChargedItem (name, rarity, charges = 1) {
-  let item = withCharges(createItem(name, rarity), charges);
-  item.isFree = true;
-  item.hasBeenUsed = false;
-  return item;
+  let {use, ...noUseItem} = withCharges(createItem(name, rarity), charges);
+  return ({
+    ...noUseItem,
+    isFree: true,
+    hasBeenUsed: false,
+    use () {
+      if (this.charges > 0) {
+        //Something AMAZING, I guess
+        this.charges--;
+        this.hasBeenUsed = true;
+        console.log(`${this.name} was used`);
+      }
+    }
+  });
 };
 
 module.exports = {

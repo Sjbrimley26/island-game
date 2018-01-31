@@ -3762,8 +3762,10 @@ var rabbit_foot = (0, _Item.createFreeChargedItem)("rabbit foot", "common");
 var fate_coin = (0, _Item.createFreeChargedItem)("coin of fate", "uncommon", 3);
 var dark_orb = (0, _Item.createChargedItem)("dark orb", "rare", 4);
 var cursed_portal = (0, _Item.createChargedItem)("cursed portal", "rare");
+var gelatinous_mass = (0, _Item.createChargedItem)("gelatinous mass", "uncommon");
+var magic_batteries = (0, _Item.createFreeChargedItem)("magic batteries", "uncommon");
 
-var itemList = [rabbit_foot, fate_coin, dark_orb, cursed_portal];
+var itemList = [rabbit_foot, fate_coin, dark_orb, cursed_portal, gelatinous_mass, magic_batteries];
 
 var commonsList = itemList.filter(function (item) {
   return item.rarity === "common";
@@ -9225,14 +9227,19 @@ function createPlayer(_ref) {
       if (the_item !== undefined && (!this.hasUsedItem || the_item.isFree && !the_item.hasBeenUsed)) {
         this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
-          var deleted_index = this.inventory.indexOf(the_item); //Should I delete the item
-          this.inventory.splice(deleted_index, 1); //or leave it in the inventory
-        } //with no charges?
+          var deleted_index = this.inventory.findIndex(function (item) {
+            item.name === the_item.name;
+          });
+          if (deleted_index !== -1) {
+            this.inventory.splice(deleted_index, 1);
+          }
+        }
       }
     },
     triggerItemEffect: function triggerItemEffect(item) {
       item.use();
       this.hasUsedItem = true;
+      var diceRoll = (0, _Logic.lucky_roll)(100, this);
 
       switch (item.name) {
 
@@ -9249,15 +9256,15 @@ function createPlayer(_ref) {
           break;
 
         case "dark orb":
-          if ((0, _Logic.lucky_roll)(100, this) < 10) {
+          if (diceRoll < 10) {
             //critical failure
             this.changeLuck(.5);
             this.changeSanity(-1);
-          } else if ((0, _Logic.lucky_roll)(100, this) < 50) {
+          } else if (diceRoll < 50) {
             //fail
             this.changeLuck(.03);
             this.changeSanity(-.2);
-          } else if ((0, _Logic.lucky_roll)(100, this) >= 98) {
+          } else if (diceRoll >= 98) {
             //critical success
             this.changeLuck(-2);
             //something amazing I guess
@@ -9286,6 +9293,19 @@ function createPlayer(_ref) {
           var i = void 0; //Now how to select...?
           this.inventory[i].addCharges(2);
           break;
+
+        case "gelatinous mass":
+          var rarity = void 0;
+          if (diceRoll < 33) {
+            rarity = "common";
+          }
+          if (diceRoll >= 33 && diceRoll <= 85) {
+            rarity = "uncommon";
+          } else {
+            rarity = "rare";
+          }
+          this.transmuteItem("gelatinous mass", rarity);
+          break;
       }
     },
     stealRandomItem: function stealRandomItem(player) {
@@ -9294,10 +9314,23 @@ function createPlayer(_ref) {
         this.pickUpItem(stolenItem[0]);
       }
     },
-    tradeRandomItem: function tradeRandomItem(player) {
+    tradeRandomItem: function tradeRandomItem(player, giveIndex, takeIndex) {
       if (player.inventory.length > 0) {
-        var itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
-        var itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        var itemToGive = void 0;
+        var itemToTake = void 0;
+
+        if (giveIndex) {
+          itemToGive = this.inventory.splice(giveIndex, 1);
+        } else {
+          itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
+        }
+
+        if (takeIndex) {
+          itemToTake = player.inventory.splice(takeIndex, 1);
+        } else {
+          itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        }
+
         this.pickUpItem(itemToTake[0]);
         player.pickUpItem(itemToGive[0]);
       }
@@ -9316,15 +9349,26 @@ function createPlayer(_ref) {
             this.hasUsedItem = true;
             this.changeLuck(.02);
             break;
+
           case "trapped":
             this.hasMoved = true;
             break;
+
           case "tied":
             this.hasUsedItem = true;
             break;
-          case "random recharge":
-            this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
+
+          case "paralyzed":
+            this.hasMoved = true;
+            this.hasUsedItem = true;
+            this.inventory.forEach(function (item) {
+              if (item.hasOwnProperty("hasBeenUsed")) {
+                item.hasBeenUsed = true;
+              }
+            });
+            this.changeLuck(.05);
             break;
+
         }
       } else {
         switch (effectArr[0]) {
@@ -9349,6 +9393,11 @@ function createPlayer(_ref) {
               }
             }
             break;
+          case "random":
+            if (effectArr[1] === "recharge") {
+              this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
+              break;
+            }
         }
       }
     },
@@ -9430,11 +9479,11 @@ function createPlayer(_ref) {
         this.inventory.splice(getRandomInt(this.inventory.length), 1);
       }
 
-      for (item in this.inventory) {
+      this.inventory.forEach(function (item) {
         if (item.hasOwnProperty("hasBeenUsed")) {
           item.hasBeenUsed = false;
         }
-      }
+      });
 
       this.active = false;
     }
@@ -9476,6 +9525,8 @@ module.exports = {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
 function createItem(name, rarity) {
   return {
     name: name,
@@ -9500,6 +9551,11 @@ function createItem(name, rarity) {
 function withCharges(item) {
   var charges = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
+  var use = item.use,
+      noUseItem = _objectWithoutProperties(item, ["use"]);
+
+  console.log(use);
+  console.log(noUseItem);
   return _extends({}, item, {
     "charges": charges,
     "initialCharges": charges,
