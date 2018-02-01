@@ -113,7 +113,7 @@ function createPlayer({ ...args }) {
           if (diceRoll < 10) {
             //critical failure
             this.changeLuck(0.5);
-            this.changeSanity(-1);
+            this.addStatusEffect("paralyzed");
           } else if (diceRoll < 50) {
             //fail
             this.changeLuck(0.03);
@@ -175,7 +175,7 @@ function createPlayer({ ...args }) {
           for (let x = 0; x < 4; x++) {
             y.pickUpItem(itemDB.getItem("rock"));
           }
-          this.changeLuck(-0.03);
+          this.changeLuck(-0.03); //Bad karma lol
           break;
 
         case "rock":
@@ -185,7 +185,7 @@ function createPlayer({ ...args }) {
             );
           }
           break;
-        //These two items takes advantage of the fact that you can't choose which items to discard
+        //The two previous items takes advantage of the fact that you can't choose which items to discard
       }
     },
 
@@ -372,16 +372,31 @@ function createPlayer({ ...args }) {
 
     onEndTurn() {
       if (this.inventory.length > 6) {
-        //Should probably let them choose which to discard
         do {
-          if (lucky_roll(100, this) >= 75) {
-            let luckyIndex = this.inventory.findIndex(item => {
-              item.rarity === "common"; //at least its a common
-            });
+            if (lucky_roll(100, this) >= 75) { //IF LUCKY
+              let luckyIndex = this.inventory.findIndex(item => {
+                item.name === "rock"; //gets rid of rocks first
+              });
+              if (luckyIndex === -1) {
+                luckyIndex = this.inventory.findIndex(item => {
+                  item.rarity === "common"; //or a common if there are no rocks
+                });
+              }
+              if (luckyIndex === -1) {
+                luckyIndex = this.inventory.findIndex(item => {
+                  item.rarity === "uncommon"; //or an uncommon if there are no commons
+                });
+              }
+              if (luckyIndex === -1) {
+                luckyIndex = this.inventory.findIndex(item => {
+                  item.rarity === "rare"; //or a rare if there are no uncommons
+                });
+              }
             this.inventory.splice(luckyIndex, 1);
-          } else {
+          } else { //IF UNLUCKY
             this.inventory.splice(getRandomInt(this.inventory.length), 1);
           }
+
         } while (this.inventory.length > 6);
       }
 
