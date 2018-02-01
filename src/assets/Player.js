@@ -5,8 +5,8 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-function createPlayer({ ...args }) {
-  return {
+function createPlayer(sprite, { ...args }) {
+  let player = {
     luck: 0,
     sanity: 1,
     inventory: [],
@@ -409,6 +409,7 @@ function createPlayer({ ...args }) {
       this.active = false;
     }
   };
+  return {...sprite, ...player};
 }
 
 module.exports = {

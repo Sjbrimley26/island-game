@@ -9128,19 +9128,46 @@ var _ItemLibrary2 = _interopRequireDefault(_ItemLibrary);
 
 var _phaser = __webpack_require__(333);
 
+var _phaser2 = _interopRequireDefault(_phaser);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var player1 = (0, _Player.createPlayer)({ id: 1, name: "Spencer" });
-var player2 = (0, _Player.createPlayer)({ id: 2, name: "Fred" });
+var config = {
+  type: _phaser2.default.AUTO,
+  width: 800,
+  height: 600,
+  scene: {
+    preload: preload,
+    create: create
+  }
+};
 
-player1.pickUpItem(_ItemLibrary2.default.getRandomCommon());
-player1.pickUpItem(_ItemLibrary2.default.getItem("dark orb"));
+var game = new _phaser2.default.Game(config);
+
+console.log(game);
+
+function preload() {
+  this.load.image('player', "assets/player.png");
+};
+
+function create() {
+  var player1 = (0, _Player.createPlayer)(this.add.sprite(0, 0, "player"), { id: 1, name: "Spencer" });
+  var player2 = (0, _Player.createPlayer)(this.add.sprite(0, 0, "player"), { id: 2, name: "Fred" });
+  console.log(player1);
+};
+
+/*
+
+player1.pickUpItem(itemDB.getRandomCommon());
+player1.pickUpItem(itemDB.getItem("dark orb"));
 
 player1.transmuteItem("dark orb");
 
 player2.stealRandomItem(player1);
 
 player2.tradeItem(player1); //optional give and take arguments
+
+*/
 
 /***/ }),
 /* 330 */
@@ -9165,10 +9192,10 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-function createPlayer(_ref) {
+function createPlayer(sprite, _ref) {
   var args = _objectWithoutProperties(_ref, []);
 
-  return {
+  var player = {
     luck: 0,
     sanity: 1,
     inventory: [],
@@ -9266,7 +9293,7 @@ function createPlayer(_ref) {
           if (diceRoll < 10) {
             //critical failure
             this.changeLuck(0.5);
-            this.changeSanity(-1);
+            this.addStatusEffect("paralyzed");
           } else if (diceRoll < 50) {
             //fail
             this.changeLuck(0.03);
@@ -9328,7 +9355,7 @@ function createPlayer(_ref) {
           for (var x = 0; x < 4; x++) {
             y.pickUpItem(_ItemLibrary2.default.getItem("rock"));
           }
-          this.changeLuck(-0.03);
+          this.changeLuck(-0.03); //Bad karma lol
           break;
 
         case "rock":
@@ -9336,7 +9363,7 @@ function createPlayer(_ref) {
             console.log("You try to throw away the rock but it reappears in your pocket");
           }
           break;
-        //These two items takes advantage of the fact that you can't choose which items to discard
+        //The two previous items takes advantage of the fact that you can't choose which items to discard
       }
     },
     stealRandomItem: function stealRandomItem(player) {
@@ -9506,14 +9533,30 @@ function createPlayer(_ref) {
     },
     onEndTurn: function onEndTurn() {
       if (this.inventory.length > 6) {
-        //Should probably let them choose which to discard
         do {
           if ((0, _Logic.lucky_roll)(100, this) >= 75) {
+            //IF LUCKY
             var luckyIndex = this.inventory.findIndex(function (item) {
-              item.rarity === "common"; //at least its a common
+              item.name === "rock"; //gets rid of rocks first
             });
+            if (luckyIndex === -1) {
+              luckyIndex = this.inventory.findIndex(function (item) {
+                item.rarity === "common"; //or a common if there are no rocks
+              });
+            }
+            if (luckyIndex === -1) {
+              luckyIndex = this.inventory.findIndex(function (item) {
+                item.rarity === "uncommon"; //or an uncommon if there are no commons
+              });
+            }
+            if (luckyIndex === -1) {
+              luckyIndex = this.inventory.findIndex(function (item) {
+                item.rarity === "rare"; //or a rare if there are no uncommons
+              });
+            }
             this.inventory.splice(luckyIndex, 1);
           } else {
+            //IF UNLUCKY
             this.inventory.splice(getRandomInt(this.inventory.length), 1);
           }
         } while (this.inventory.length > 6);
@@ -9528,6 +9571,7 @@ function createPlayer(_ref) {
       this.active = false;
     }
   };
+  return _extends({}, sprite, player);
 }
 
 module.exports = {
@@ -9547,7 +9591,8 @@ function roll_the_dice(sides) {
 }
 
 //same as above, but player's luck factors in
-//player's luck should be a number between -1 and 1
+//player's luck should be a number between -0.5 and 0.5
+//so they would be able to roll anywhere between -50 and 150 on a 100-sided dice
 function lucky_roll(sides, player) {
   return Math.floor((Math.random() + player.luck) * sides) + 1;
 }
