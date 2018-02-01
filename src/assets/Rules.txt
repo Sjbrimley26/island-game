@@ -1,0 +1,16 @@
+Player can move once and use 1 item per turn .
+Player gains a common item every turn unless their inventory has more than 6 items,
+and an uncommon if it is past turn 5.
+Most items have charges, so they can only be used a few times.
+Some items are "free" and can be used even if the player has used another item,
+but only once a turn per item (should probably be 1 extra free item a turn?).
+Players have sanity, which if it hits 0, causes them to "go insane" and be stunned for
+the turn.
+Players also have luck, which increases when bad things happen and vice versa.
+The luck influences the players odds of good outcomes when using items (and maybe elsewhere?).
+If the player has high luck at the beginning of their turn, their luck will go down a bit.
+At the end of each turn, Players lose random items until they have 6 (should probably let them pick).
+
+The island will be 7 tiles to the center from any edge,
+so the game will be about 14 - 20 turns.
+The goal is to grab an artifact from the center and get out.
