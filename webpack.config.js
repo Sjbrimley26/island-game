@@ -1,12 +1,14 @@
-const path = require('path');
+const path = require("path");
+const webpack = require("webpack");
 
 module.exports = {
-  entry: ["babel-polyfill", './index.js'],
+  entry: ["babel-polyfill", "./index.js"],
   output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist')
+    filename: "bundle.js",
+    path: path.resolve(__dirname, "dist"),
+    publicPath: "/build/"
   },
-  context: path.resolve(__dirname, 'src'),
+  context: path.resolve(__dirname, "src"),
   devServer: {
     stats: "verbose",
     open: true,
@@ -19,12 +21,18 @@ module.exports = {
         include: /src/,
         exclude: /(node_modules)/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['env']
+            presets: ["env"]
           }
         }
       }
     ]
-  }
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      CANVAS_RENDERER: JSON.stringify(true),
+      WEBGL_RENDERER: JSON.stringify(true)
+    })
+  ]
 };

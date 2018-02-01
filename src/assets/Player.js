@@ -1,12 +1,12 @@
-import { roll_the_dice, lucky_roll } from './Logic'
-import itemDB from './ItemLibrary';
+import { roll_the_dice, lucky_roll } from "./Logic";
+import itemDB from "./ItemLibrary";
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
-function createPlayer ({...args}) {
-  return ({
+function createPlayer({ ...args }) {
+  return {
     luck: 0,
     sanity: 1,
     inventory: [],
@@ -18,7 +18,7 @@ function createPlayer ({...args}) {
     hasMoved: false,
     hasUsedItem: false,
 
-    changeSanity (amount) {
+    changeSanity(amount) {
       //amount should be between -1 and 1
       this.sanity = (this.sanity * 10 + amount * 10) / 10;
       if (this.sanity > 1) {
@@ -29,53 +29,59 @@ function createPlayer ({...args}) {
       }
     },
 
-    changeLuck (amount) {
+    changeLuck(amount) {
       //a luck of .5 rolling a 100-sided die will have a range of 50 - 150, that seems like a good range to me
       //so this amount should be between -.5 and .5, though I suppose it could be 1 for a complete flip
       //so all odds in this game will fall between -49% and 150%
       this.luck = (this.luck * 10 + amount * 10) / 10;
-      if (this.luck > .5) {
-        this.luck = .5;
+      if (this.luck > 0.5) {
+        this.luck = 0.5;
       }
-      if (this.luck < -.5) {
-        this.luck = -.5;
+      if (this.luck < -0.5) {
+        this.luck = -0.5;
       }
     },
 
-    normalizeLuck () {
+    normalizeLuck() {
       const diff = Math.abs(this.luck * 10 - 10);
       if (this.luck > 1) {
-        this.changeLuck( - ( Math.round(diff * 10/3)) / 10 );
-      }
-      else {
-        this.changeLuck( ( Math.round(diff * 10/3)) / 10 );
+        this.changeLuck(-Math.round(diff * 10 / 3) / 10);
+      } else {
+        this.changeLuck(Math.round(diff * 10 / 3) / 10);
       }
     },
 
-    goInsane () {
+    goInsane() {
       this.sanity = 1;
       this.addStatusEffect("stunned");
     },
 
-    pickUpItem (item) { //Use item for new or exterior items
+    pickUpItem(item) {
       const the_item = this.getPlayerItem(item.name);
       if (the_item === undefined) {
-        this.inventory.push({...item});
-      }
-      else {
+        this.inventory.push({ ...item });
+        let tempItem = this.getPlayerItem(item.name);
+        if (lucky_roll(100, this) < 85) {
+          tempItem.setCharges(getRandomInt(tempItem.charges));
+        }
+      } else {
         the_item.addCharges(item.charges);
       }
     },
 
-    useItem (name) { //Use name for already owned items
+    useItem(name) {
+      //Use name for already owned items
       //the item used as the argument should be the name of the item
       //this is because the player is not actually holding the object,
       //but a clone of the object, so finding it by name makes sense.
       const the_item = this.getPlayerItem(name);
-      if (the_item !== undefined && (!this.hasUsedItem || (the_item.isFree && !the_item.hasBeenUsed))) {
+      if (
+        the_item !== undefined &&
+        (!this.hasUsedItem || (the_item.isFree && !the_item.hasBeenUsed))
+      ) {
         this.triggerItemEffect(the_item);
         if (the_item.charges === 0) {
-          const deleted_index = this.inventory.findIndex((item) => {
+          const deleted_index = this.inventory.findIndex(item => {
             item.name === the_item.name;
           });
           if (deleted_index !== -1) {
@@ -90,56 +96,50 @@ function createPlayer ({...args}) {
       this.hasUsedItem = true;
       let diceRoll = lucky_roll(100, this);
 
-      switch(item.name) {
-
+      switch (item.name) {
         case "rabbit foot":
-          this.changeLuck(.07);
+          this.changeLuck(0.07);
           break;
 
         case "coin of fate":
           if (roll_the_dice(2) === 1) {
-            this.changeLuck(-.1);
-          }
-          else {
-            this.changeLuck(.1);
+            this.changeLuck(-0.1);
+          } else {
+            this.changeLuck(0.1);
           }
           break;
 
         case "dark orb":
-          if ( diceRoll < 10) {
+          if (diceRoll < 10) {
             //critical failure
-            this.changeLuck(.5);
+            this.changeLuck(0.5);
             this.changeSanity(-1);
-          }
-          else if (diceRoll < 50) {
+          } else if (diceRoll < 50) {
             //fail
-            this.changeLuck(.03);
-            this.changeSanity(-.2);
-          }
-          else if (diceRoll >= 98) {
+            this.changeLuck(0.03);
+            this.changeSanity(-0.2);
+          } else if (diceRoll >= 98) {
             //critical success
             this.changeLuck(-2);
             //something amazing I guess
-          }
-          else {
+          } else {
             //something cool
-            this.changeSanity(-.1);
+            this.changeSanity(-0.1);
           }
           break;
 
         case "cursed portal":
-          if (this.sanity < .5) {
+          if (this.sanity < 0.5) {
             //no effect
             item.charges++;
-          }
-          else {
+          } else {
             //give player choice to go to somewhere
             //that choice will return an x, y coordinate
 
             //choose_target should trigger a click effect,
             //like making all the tiles clickable and on click
             //the clicked tile's x and y is returned
-            this.changeSanity(-2);
+            this.changeSanity(-1);
           }
           break;
 
@@ -155,23 +155,51 @@ function createPlayer ({...args}) {
           }
           if (diceRoll >= 33 && diceRoll <= 85) {
             rarity = "uncommon";
-          }
-          else {
+          } else {
             rarity = "rare";
           }
           this.transmuteItem("gelatinous mass", rarity);
           break;
+
+        case "draw two":
+          if (diceRoll < 50) {
+            this.pickUpItem(itemDB.getRandomCommon());
+          } else {
+            this.addStatusEffect("draw 1 uncommon"); //You get it the next turn so it won't be discarded :)
+          }
+          this.pickUpItem(itemDB.getRandomCommon());
+          break;
+
+        case "draw four":
+          let y; //target enemy player
+          for (let x = 0; x < 4; x++) {
+            y.pickUpItem(itemDB.getItem("rock"));
+          }
+          this.changeLuck(-0.03);
+          break;
+
+        case "rock":
+          if (item.charges !== 0) {
+            console.log(
+              "You try to throw away the rock but it reappears in your pocket"
+            );
+          }
+          break;
+        //These two items takes advantage of the fact that you can't choose which items to discard
       }
     },
 
-    stealRandomItem (player) {
+    stealRandomItem(player) {
       if (player.inventory.length > 0) {
-        const stolenItem = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+        const stolenItem = player.inventory.splice(
+          getRandomInt(player.inventory.length),
+          1
+        );
         this.pickUpItem(stolenItem[0]);
       }
     },
 
-    tradeRandomItem (player, giveIndex, takeIndex) {
+    tradeItem(player, giveIndex, takeIndex) {
       if (player.inventory.length > 0) {
         let itemToGive;
         let itemToTake;
@@ -179,13 +207,19 @@ function createPlayer ({...args}) {
         if (giveIndex) {
           itemToGive = this.inventory.splice(giveIndex, 1);
         } else {
-          itemToGive = this.inventory.splice(getRandomInt(this.inventory.length), 1);
+          itemToGive = this.inventory.splice(
+            getRandomInt(this.inventory.length),
+            1
+          );
         }
 
         if (takeIndex) {
           itemToTake = player.inventory.splice(takeIndex, 1);
         } else {
-          itemToTake = player.inventory.splice(getRandomInt(player.inventory.length), 1);
+          itemToTake = player.inventory.splice(
+            getRandomInt(player.inventory.length),
+            1
+          );
         }
 
         this.pickUpItem(itemToTake[0]);
@@ -193,20 +227,22 @@ function createPlayer ({...args}) {
       }
     },
 
-    addStatusEffect (effect) {
+    addStatusEffect(effect) {
       if (this.status.indexOf(effect) === -1) {
         this.status.push(effect);
       }
     },
 
-    triggerStatusEffect (effect) {
+    triggerStatusEffect(effect) {
       let effectArr = effect.split(" ");
       if (effectArr.length === 1) {
         switch (effect) {
           case "stunned":
             this.hasMoved = true;
             this.hasUsedItem = true;
-            this.changeLuck(.02);
+            if (this.sanity < 1) {
+              this.changeLuck(0.02);
+            }
             break;
 
           case "trapped":
@@ -220,21 +256,20 @@ function createPlayer ({...args}) {
           case "paralyzed":
             this.hasMoved = true;
             this.hasUsedItem = true;
-            this.inventory.forEach((item) => {
+            this.inventory.forEach(item => {
               if (item.hasOwnProperty("hasBeenUsed")) {
                 item.hasBeenUsed = true;
               }
-            })
-            this.changeLuck(.05);
+            });
+            this.changeLuck(0.05);
             break;
-
         }
-      }
-      else {
+      } else {
         switch (effectArr[0]) {
           case "draw": // so you could do "draw 2" for example
             for (let i = 0; i < parseInt(effectArr[1]); i++) {
-              if (effectArr[2]) { // or "draw 2 common"
+              if (effectArr[2]) {
+                // or "draw 2 common"
                 switch (effectArr[2]) {
                   case "common":
                     this.pickUpItem(itemDB.getRandomCommon());
@@ -246,23 +281,23 @@ function createPlayer ({...args}) {
                     this.pickUpItem(itemDB.getRandomRare());
                     break;
                 }
-              }
-              else {
+              } else {
                 this.pickUpItem(itemDB.getRandomItem());
               }
             }
             break;
           case "random":
             if (effectArr[1] === "recharge") {
-              this.rechargeItem(this.inventory[getRandomInt(this.inventory.length)]);
-              break;
+              this.rechargeItem(
+                this.inventory[getRandomInt(this.inventory.length)]
+              );
             }
+            break;
         }
       }
-
     },
 
-    rechargeItem (item) {
+    rechargeItem(item) {
       const the_item = this.getPlayerItem(item.name);
       if (the_item !== undefined) {
         if (the_item.charges < the_item.initialCharges) {
@@ -271,15 +306,15 @@ function createPlayer ({...args}) {
       }
     },
 
-    transmuteItem (name, optionalRarity) { //Removes an item from your inventory and returns a different one of the same rarity
+    transmuteItem(name, optionalRarity) {
+      //Removes an item from your inventory and returns a different one of the same rarity
       const the_item = this.getPlayerItem(name);
       if (the_item !== undefined) {
         const itemIndex = this.inventory.indexOf(the_item);
         let rarity;
         if (optionalRarity) {
           rarity = optionalRarity;
-        }
-        else {
+        } else {
           rarity = the_item.rarity;
         }
         switch (rarity) {
@@ -299,21 +334,21 @@ function createPlayer ({...args}) {
       }
     },
 
-    getPlayerItem (name) {
-      const the_item = this.inventory.find(function(element){
+    getPlayerItem(name) {
+      const the_item = this.inventory.find(function(element) {
         return element.name === name;
       });
       return the_item;
     },
 
-    onStartTurn () {
+    onStartTurn() {
       this.turn += 1;
       this.hasUsedItem = false;
       this.hasMoved = false;
 
       if (this.luck > 1) {
         this.normalizeLuck(); //So if a player has high luck, it decreases a bit at the start
-                              //of each turn.
+        //of each turn.
       }
 
       if (this.sanity === 0) {
@@ -321,41 +356,47 @@ function createPlayer ({...args}) {
       }
 
       if (this.inventory.length < 6) {
-        if (this.turn <= 5) {
-          this.pickUpItem(itemDB.getRandomCommon());
-        }
-        else {
+        if (this.turn >= 5) {
           this.pickUpItem(itemDB.getRandomUncommon());
         }
+        this.pickUpItem(itemDB.getRandomCommon());
       }
 
-      this.status.forEach((effect) => {
+      this.status.forEach(effect => {
         this.triggerStatusEffect(effect);
       });
       this.status = [];
 
       this.active = true;
-
     },
 
-    onEndTurn () {
-      if (this.inventory.length > 6) { //Should probably let them choose which to discard
-        this.inventory.splice(getRandomInt(this.inventory.length), 1);
+    onEndTurn() {
+      if (this.inventory.length > 6) {
+        //Should probably let them choose which to discard
+        do {
+          if (lucky_roll(100, this) >= 75) {
+            let luckyIndex = this.inventory.findIndex(item => {
+              item.rarity === "common"; //at least its a common
+            });
+            this.inventory.splice(luckyIndex, 1);
+          } else {
+            this.inventory.splice(getRandomInt(this.inventory.length), 1);
+          }
+        } while (this.inventory.length > 6);
       }
 
-      this.inventory.forEach((item) => {
-        if (item.hasOwnProperty("hasBeenUsed")) {
+      this.inventory.forEach(item => {
+        if (item.isFree) {
           item.hasBeenUsed = false;
         }
       });
 
       this.active = false;
-
-    },
-
-  });
-};
+    }
+  };
+}
 
 module.exports = {
-  createPlayer
+  createPlayer,
+  getRandomInt
 };
