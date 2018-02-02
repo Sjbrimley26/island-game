@@ -13,22 +13,27 @@ const config = {
     preload,
     create
   }
-}
+};
 
 const game = new Phaser.Game(config);
 
 console.log(game);
 
-function preload () {
-  this.load.image('player', "assets/player.png");
-};
+function preload() {
+  this.load.image("player", "assets/player.png");
+}
 
-function create () {
-  const player1 = createPlayer(this.add.sprite(0,0,"player"), { id: 1, name: "Spencer" });
-  const player2 = createPlayer(this.add.sprite(0,0,"player"), { id: 2, name: "Fred" });
+function create() {
+  const player1 = createPlayer(this.add.sprite(50, 50, "player"), {
+    id: 1,
+    name: "Spencer"
+  });
+  const player2 = createPlayer(this.add.sprite(300, 300, "player"), {
+    id: 2,
+    name: "Fred"
+  });
   console.log(player1);
-};
-
+}
 
 /*
 
