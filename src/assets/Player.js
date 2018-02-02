@@ -43,7 +43,7 @@ function createPlayer(sprite, { ...args }) {
     },
 
     normalizeLuck() {
-      const diff = Math.abs(this.luck * 10 - 10);
+      const diff = Math.abs(this.luck) * 10 - 10;
       if (this.luck > 1) {
         this.changeLuck(-Math.round(diff * 10 / 3) / 10);
       } else {
@@ -252,7 +252,7 @@ function createPlayer(sprite, { ...args }) {
             this.hasMoved = true;
             this.hasUsedItem = true;
             this.inventory.forEach(item => {
-              if (item.hasOwnProperty("hasBeenUsed")) {
+              if (item.isFree) {
                 item.hasBeenUsed = true;
               }
             });
@@ -352,7 +352,14 @@ function createPlayer(sprite, { ...args }) {
 
       if (this.inventory.length < 6) {
         if (this.turn >= 5) {
-          this.pickUpItem(itemDB.getRandomUncommon());
+          let diceRoll = lucky_roll(100, this);
+          let item =
+            diceRoll < 10 ? "rock" : diceRoll > 90 ? "rare" : "uncommon";
+          item === "rock"
+            ? this.pickUpItem(itemDB.getItem("rock"))
+            : item === "rare"
+              ? this.pickUpItem(itemDB.getRandomRare())
+              : this.pickUpItem(itemDB.getRandomUnommon());
         }
         this.pickUpItem(itemDB.getRandomCommon());
       }

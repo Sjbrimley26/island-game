@@ -9,7 +9,8 @@ the turn.
 Players also have luck, which increases when bad things happen and vice versa.
 The luck influences the players odds of good outcomes when using items (and maybe elsewhere?).
 If the player has high luck at the beginning of their turn, their luck will go down a bit.
-At the end of each turn, Players lose random items until they have 6 (should probably let them pick).
+At the end of each turn, Players lose random items until they have 6,
+and if they are lucky they will only lose commons.
 
 The island will be 7 tiles to the center from any edge,
 so the game will be about 14 - 20 turns.

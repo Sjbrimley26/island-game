@@ -5,7 +5,7 @@ import { createPlayer, getRandomInt } from "./assets/Player.js";
 import itemDB from "./assets/ItemLibrary";
 import Phaser from "./phaser";
 
-const config = {
+const GAME_CONFIG = {
   type: Phaser.AUTO,
   width: 800,
   height: 600,
@@ -15,7 +15,7 @@ const config = {
   }
 };
 
-const game = new Phaser.Game(config);
+const game = new Phaser.Game(GAME_CONFIG);
 
 function preload() {
   this.load.image("player", "assets/player.png");
