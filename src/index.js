@@ -17,8 +17,6 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-console.log(game);
-
 function preload() {
   this.load.image("player", "assets/player.png");
 }
@@ -32,7 +30,6 @@ function create() {
     id: 2,
     name: "Fred"
   });
-  console.log(player1);
 }
 
 /*

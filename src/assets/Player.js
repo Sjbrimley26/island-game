@@ -149,15 +149,10 @@ function createPlayer(sprite, { ...args }) {
           break;
 
         case "gelatinous mass":
-          let rarity;
-          if (diceRoll < 33) {
-            rarity = "common";
-          }
-          if (diceRoll >= 33 && diceRoll <= 85) {
-            rarity = "uncommon";
-          } else {
-            rarity = "rare";
-          }
+          let rarity =
+            diceRoll < 33
+              ? "common"
+              : diceRoll >= 33 && diceRoll <= 85 ? "uncommon" : "rare";
           this.transmuteItem("gelatinous mass", rarity);
           break;
 
@@ -373,30 +368,31 @@ function createPlayer(sprite, { ...args }) {
     onEndTurn() {
       if (this.inventory.length > 6) {
         do {
-            if (lucky_roll(100, this) >= 75) { //IF LUCKY
-              let luckyIndex = this.inventory.findIndex(item => {
-                item.name === "rock"; //gets rid of rocks first
+          if (lucky_roll(100, this) >= 75) {
+            //IF LUCKY
+            let luckyIndex = this.inventory.findIndex(item => {
+              item.name === "rock"; //gets rid of rocks first
+            });
+            if (luckyIndex === -1) {
+              luckyIndex = this.inventory.findIndex(item => {
+                item.rarity === "common"; //or a common if there are no rocks
               });
-              if (luckyIndex === -1) {
-                luckyIndex = this.inventory.findIndex(item => {
-                  item.rarity === "common"; //or a common if there are no rocks
-                });
-              }
-              if (luckyIndex === -1) {
-                luckyIndex = this.inventory.findIndex(item => {
-                  item.rarity === "uncommon"; //or an uncommon if there are no commons
-                });
-              }
-              if (luckyIndex === -1) {
-                luckyIndex = this.inventory.findIndex(item => {
-                  item.rarity === "rare"; //or a rare if there are no uncommons
-                });
-              }
+            }
+            if (luckyIndex === -1) {
+              luckyIndex = this.inventory.findIndex(item => {
+                item.rarity === "uncommon"; //or an uncommon if there are no commons
+              });
+            }
+            if (luckyIndex === -1) {
+              luckyIndex = this.inventory.findIndex(item => {
+                item.rarity === "rare"; //or a rare if there are no uncommons
+              });
+            }
             this.inventory.splice(luckyIndex, 1);
-          } else { //IF UNLUCKY
+          } else {
+            //IF UNLUCKY
             this.inventory.splice(getRandomInt(this.inventory.length), 1);
           }
-
         } while (this.inventory.length > 6);
       }
 
@@ -409,7 +405,7 @@ function createPlayer(sprite, { ...args }) {
       this.active = false;
     }
   };
-  return {...sprite, ...player};
+  return { ...sprite, ...player };
 }
 
 module.exports = {
