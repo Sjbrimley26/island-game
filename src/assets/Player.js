@@ -57,23 +57,16 @@ function createPlayer(sprite, { ...args }) {
     },
 
     pickUpItem(item) {
-      const the_item = this.getPlayerItem(item.name);
-      if (the_item === undefined) {
-        this.inventory.push({ ...item });
-        let tempItem = this.getPlayerItem(item.name);
+      this.inventory.push({ ...item });
+      let tempItem = this.getPlayerItem(item.name);
+      if (item.initialCharges !== 1) {
         if (lucky_roll(100, this) < 85) {
           tempItem.setCharges(getRandomInt(tempItem.charges));
         }
-      } else {
-        the_item.addCharges(item.charges);
       }
     },
 
     useItem(name) {
-      //Use name for already owned items
-      //the item used as the argument should be the name of the item
-      //this is because the player is not actually holding the object,
-      //but a clone of the object, so finding it by name makes sense.
       const the_item = this.getPlayerItem(name);
       if (
         the_item !== undefined &&
@@ -93,8 +86,11 @@ function createPlayer(sprite, { ...args }) {
 
     triggerItemEffect(item) {
       item.use();
-      this.hasUsedItem = true;
+      this.hasUsedItem = item.isFree ? false : true;
       let diceRoll = lucky_roll(100, this);
+      const target = item.targetsEnemy ? this.selectTarget() : null;
+      const itemIndex = item.targetsItem ? this.selectItem(item.name) : null;
+      const targetTile = item.targetsTile ? this.selectTile() : null;
 
       switch (item.name) {
         case "rabbit foot":
@@ -144,8 +140,7 @@ function createPlayer(sprite, { ...args }) {
           break;
 
         case "magic batteries":
-          let i; //Now how to select...?
-          this.inventory[i].addCharges(2);
+          this.inventory[itemIndex].addCharges(2);
           break;
 
         case "gelatinous mass":
@@ -166,11 +161,11 @@ function createPlayer(sprite, { ...args }) {
           break;
 
         case "draw four":
-          let y; //target enemy player
           for (let x = 0; x < 4; x++) {
-            y.pickUpItem(itemDB.getItem("rock"));
+            target.pickUpItem(itemDB.getItem("rock"));
           }
           this.changeLuck(-0.03); //Bad karma lol
+          this.changeSanity(-0.1);
           break;
 
         case "rock":
@@ -181,15 +176,49 @@ function createPlayer(sprite, { ...args }) {
           }
           break;
         //The two previous items takes advantage of the fact that you can't choose which items to discard
+
+        case "lucky lasso":
+          this.stealRandomItem(target);
+          break;
+
+        case "jack in the box":
+          targetTile.addEffect("scare 0.5");
+          break;
+
+        case "felix felicis":
+          this.changeLuck(1); //Lucky one turn
+          this.addStatusEffect("karma -0.6"); //Unlucky the next
+          break;
       }
     },
 
     stealRandomItem(player) {
       if (player.inventory.length > 0) {
-        const stolenItem = player.inventory.splice(
-          getRandomInt(player.inventory.length),
-          1
-        );
+        const luckyDiff = lucky_roll(100, this) - lucky_roll(100, player);
+        let stolenItem;
+        if (luckyDiff > 0) {
+          stolenItem = player.inventory.splice(
+            getRandomInt(player.inventory.length),
+            1
+          );
+        } else {
+          let luckyIndex;
+          luckyIndex = player.inventory.findIndex(item => {
+            item.rarity === "common";
+          });
+          if (luckyIndex === -1) {
+            luckyIndex = this.inventory.findIndex(item => {
+              item.rarity === "uncommon"; //or an uncommon if there are no commons
+            });
+          }
+          if (luckyIndex !== -1) {
+            stolenItem = player.inventory.splice(luckyIndex, 1);
+          } else {
+            //if they roll luckier than you, you can only steal a common or an uncommon
+            //otherwise you don't steal anything
+            return;
+          }
+        }
         this.pickUpItem(stolenItem[0]);
       }
     },
@@ -220,6 +249,27 @@ function createPlayer(sprite, { ...args }) {
         this.pickUpItem(itemToTake[0]);
         player.pickUpItem(itemToGive[0]);
       }
+    },
+
+    //TODO Select functions
+    //I'm thinking it will use the game's playermap
+    //and tilemap somehow
+
+    selectTarget() {
+      //First Select an Enemy Target
+      return enemy;
+    },
+
+    selectItem(exclusion) {
+      //added exclusion so items can't select themselves (e.g. can't use magic batteries to add charges  to itself)
+      //Select an item to Affect
+      let selected_item;
+      return this.inventory.indexOf(selected_item);
+    },
+
+    selectTile() {
+      //Select a tile
+      return tile;
     },
 
     addStatusEffect(effect) {
@@ -281,12 +331,21 @@ function createPlayer(sprite, { ...args }) {
               }
             }
             break;
+
           case "random":
             if (effectArr[1] === "recharge") {
               this.rechargeItem(
                 this.inventory[getRandomInt(this.inventory.length)]
               );
             }
+            break;
+
+          case "scare":
+            this.changeSanity(-parseFloat(effectArr[1]));
+            break;
+
+          case "karma":
+            this.changeLuck(parseFloat(effectArr[1]));
             break;
         }
       }
@@ -341,8 +400,8 @@ function createPlayer(sprite, { ...args }) {
       this.hasUsedItem = false;
       this.hasMoved = false;
 
-      if (this.luck > 1) {
-        this.normalizeLuck(); //So if a player has high luck, it decreases a bit at the start
+      if (Math.abs(this.luck) - 1 > 0.3) {
+        this.normalizeLuck(); //So if a player has high or low luck, it decreases a bit at the start
         //of each turn.
       }
 
@@ -350,19 +409,16 @@ function createPlayer(sprite, { ...args }) {
         this.goInsane();
       }
 
-      if (this.inventory.length < 6) {
-        if (this.turn >= 5) {
-          let diceRoll = lucky_roll(100, this);
-          let item =
-            diceRoll < 10 ? "rock" : diceRoll > 90 ? "rare" : "uncommon";
-          item === "rock"
-            ? this.pickUpItem(itemDB.getItem("rock"))
-            : item === "rare"
-              ? this.pickUpItem(itemDB.getRandomRare())
-              : this.pickUpItem(itemDB.getRandomUnommon());
-        }
-        this.pickUpItem(itemDB.getRandomCommon());
+      if (this.turn >= 5) {
+        let diceRoll = lucky_roll(100, this);
+        let item = diceRoll < 10 ? "rock" : diceRoll > 90 ? "rare" : "uncommon";
+        item === "rock"
+          ? this.pickUpItem(itemDB.getItem("rock"))
+          : item === "rare"
+            ? this.pickUpItem(itemDB.getRandomRare())
+            : this.pickUpItem(itemDB.getRandomUnommon());
       }
+      this.pickUpItem(itemDB.getRandomCommon());
 
       this.status.forEach(effect => {
         this.triggerStatusEffect(effect);

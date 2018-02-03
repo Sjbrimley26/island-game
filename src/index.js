@@ -16,20 +16,23 @@ const GAME_CONFIG = {
 };
 
 const game = new Phaser.Game(GAME_CONFIG);
+game.playerMap = [];
+game.playerCount = 0;
+game.createPlayer = (x, y, image, name) => {
+  this.playerCount++;
+  return createPlayer(this.add.sprite(x, y, image), {
+    id: this.playerCount,
+    name
+  });
+};
 
 function preload() {
   this.load.image("player", "assets/player.png");
 }
 
 function create() {
-  const player1 = createPlayer(this.add.sprite(50, 50, "player"), {
-    id: 1,
-    name: "Spencer"
-  });
-  const player2 = createPlayer(this.add.sprite(300, 300, "player"), {
-    id: 2,
-    name: "Fred"
-  });
+  const player1 = this.createPlayer(50, 50, "player", "Spencer");
+  const player2 = this.createPlayer(300, 300, "player", "Fred");
 }
 
 /*

@@ -2,7 +2,10 @@ import {
   createItem,
   withCharges,
   createChargedItem,
-  createFreeChargedItem
+  createFreeChargedItem,
+  targetsItem,
+  targetsEnemy,
+  targetsTile
 } from "./Item";
 
 function getRandomInt(max) {
@@ -12,12 +15,19 @@ function getRandomInt(max) {
 const rabbit_foot = createFreeChargedItem("rabbit foot", "common");
 const fate_coin = createFreeChargedItem("coin of fate", "uncommon", 3); //Okay so now charges will be a random number
 const dark_orb = createChargedItem("dark orb", "rare", 4); //between 1 and this number, determined on pick up
-const cursed_portal = createChargedItem("cursed portal", "rare");
+const cursed_portal = targetsTile(createChargedItem("cursed portal", "rare"));
 const gelatinous_mass = createChargedItem("gelatinous mass", "uncommon");
-const magic_batteries = createFreeChargedItem("magic batteries", "uncommon");
+const magic_batteries = targetsItem(
+  createFreeChargedItem("magic batteries", "uncommon")
+);
 const draw_two = createChargedItem("draw two", "common");
-const draw_four = createChargedItem("draw four", "uncommon");
+const draw_four = targetsEnemy(createChargedItem("draw four", "uncommon"));
 const rock = createChargedItem("rock", "special", 2); //special items won't be randomly chosen
+const lucky_lasso = targetsEnemy(createChargedItem("lucky lasso", "common"));
+const jack_in_the_box = targetsTile(
+  createChargedItem("jack in the box", "common", 3)
+);
+const felix_felicis = createFreeChargedItem("felix felicis", "uncommon");
 
 const itemList = [
   rabbit_foot,
@@ -28,20 +38,26 @@ const itemList = [
   magic_batteries,
   draw_two,
   draw_four,
-  rock
+  rock,
+  lucky_lasso,
+  jack_in_the_box,
+  felix_felicis
 ];
 
 const commonsList = itemList.filter(item => item.rarity === "common");
 const uncommonsList = itemList.filter(item => item.rarity === "uncommon");
 const raresList = itemList.filter(item => item.rarity === "rare");
+const normalsList = itemList.filter(item => item.rarity !== "special");
 
 const itemDB = {
   itemList,
   commonsList,
   raresList,
   uncommonsList,
+  normalsList,
 
   getRandomCommon(exclusion) {
+    //exclusion must be a name
     //returns any random common item but the exclusion
     if (!exclusion) {
       return this.commonsList[getRandomInt(this.commonsList.length)];
@@ -79,7 +95,7 @@ const itemDB = {
   },
 
   getRandomItem() {
-    return this.itemList[getRandomInt(this.itemList.length)];
+    return this.normalsList[getRandomInt(this.normalsList.length)];
   },
 
   getItem(name) {

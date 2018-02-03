@@ -39,7 +39,7 @@ function createChargedItem(name, rarity, charges = 1) {
 }
 
 function createFreeChargedItem(name, rarity, charges = 1) {
-  let { use, ...noUseItem } = withCharges(createItem(name, rarity), charges);
+  let { use, ...noUseItem } = createChargedItem(name, rarity, charges);
   return {
     ...noUseItem,
     isFree: true,
@@ -54,9 +54,33 @@ function createFreeChargedItem(name, rarity, charges = 1) {
   };
 }
 
+function targetsEnemy(item) {
+  return {
+    ...item,
+    targetsEnemy: true
+  };
+}
+
+function targetsItem(item) {
+  return {
+    ...item,
+    targetsItem: true
+  };
+}
+
+function targetsTile(item) {
+  return {
+    ...item,
+    targetsTile: true
+  };
+}
+
 module.exports = {
   createItem,
   withCharges,
   createChargedItem,
-  createFreeChargedItem
+  createFreeChargedItem,
+  targetsItem,
+  targetsEnemy,
+  targetsTile
 };
