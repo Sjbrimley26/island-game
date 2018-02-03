@@ -28,6 +28,21 @@ const jack_in_the_box = targetsTile(
   createChargedItem("jack in the box", "common", 3)
 );
 const felix_felicis = createFreeChargedItem("felix felicis", "uncommon");
+const mulligan = createChargedItem("mulligan", "common");
+const regift = targetsItem(createChargedItem("regift", "common"));
+const upgrade = targetsItem(createChargedItem("upgrade", "uncommon"));
+const switcheroo = targetsItem(
+  targetsEnemy(createChargedItem("switcheroo", "common"))
+);
+const trade = targetsItem(targetsEnemy(createChargedItem("trade", "common")));
+const caltrops = targetsTile(createChargedItem("caltrops", "common", 2));
+const bola_trap = targetsTile(createChargedItem("bola trap", "common", 2));
+const tesla_coil = targetsTile(createChargedItem("tesla coil", "uncommon"));
+const distracting_magazine = targetsTile(
+  createChargedItem("distracting magazine", "uncommon")
+);
+const net_gun = targetsEnemy(createChargedItem("net gun", "uncommon"));
+const finger_trap = targetsEnemy(createChargedItem("finger trap", "uncommon"));
 
 const itemList = [
   rabbit_foot,
@@ -41,7 +56,18 @@ const itemList = [
   rock,
   lucky_lasso,
   jack_in_the_box,
-  felix_felicis
+  felix_felicis,
+  mulligan,
+  regift,
+  upgrade,
+  switcheroo,
+  trade,
+  caltrops,
+  bola_trap,
+  tesla_coil,
+  distracting_magazine,
+  net_gun,
+  finger_trap
 ];
 
 const commonsList = itemList.filter(item => item.rarity === "common");

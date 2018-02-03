@@ -1,8 +1,15 @@
 import { roll_the_dice, lucky_roll } from "./Logic";
 import itemDB from "./ItemLibrary";
+import _ from "lodash";
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
+}
+
+function forLoop(num, func) {
+  for (let i = 0; i < num; i++) {
+    func;
+  }
 }
 
 function createPlayer(sprite, { ...args }) {
@@ -161,9 +168,7 @@ function createPlayer(sprite, { ...args }) {
           break;
 
         case "draw four":
-          for (let x = 0; x < 4; x++) {
-            target.pickUpItem(itemDB.getItem("rock"));
-          }
+          forLoop(4, target.pickUpItem(itemDB.getItem("rock")));
           this.changeLuck(-0.03); //Bad karma lol
           this.changeSanity(-0.1);
           break;
@@ -188,6 +193,89 @@ function createPlayer(sprite, { ...args }) {
         case "felix felicis":
           this.changeLuck(1); //Lucky one turn
           this.addStatusEffect("karma -0.6"); //Unlucky the next
+          break;
+
+        case "mulligan":
+          let commonCount =
+            this.inventory.filter(item => item.rarity === "common").length +
+            this.inventory.filter(item => item.name === "rock").length;
+
+          let uncommonCount = this.inventory.filter(
+            item => item.rarity === "uncommon"
+          ).length;
+
+          let rareCount = this.inventory.filter(item => item.rarity === "rare")
+            .length;
+
+          if (diceRoll < 10) {
+            rareCount--;
+          } else if (diceRoll >= 10 && diceRoll < 70) {
+            uncommonCount--;
+          } else {
+            commonCount--;
+          }
+          this.changeLuck(-0.05);
+          this.inventory = [];
+          forLoop(commonCount, this.pickUpItem(itemDB.getRandomCommon()));
+          forLoop(uncommonCount, this.pickUpItem(itemDB.getRandomUncommon()));
+          forLoop(rareCount, this.pickUpItem(itemDB.getRandomRare()));
+          break;
+
+        case "regift":
+          if (this.inventory[itemIndex].name !== "rock") {
+            this.transmuteItem(this.inventory[itemIndex]);
+          } else {
+            this.transmuteItem(this.inventory[itemIndex], "common");
+          }
+          break;
+
+        case "upgrade":
+          switch (this.inventory[itemIndex].rarity) {
+            case "common":
+              this.transmuteItem(this.inventory[itemIndex], "uncommon");
+              break;
+            case "uncommon":
+              this.transmuteItem(this.inventory[itemIndex], "rare");
+              break;
+            case "rare":
+              this.transmuteItem(this.inventory[itemIndex]);
+              break;
+            case "special":
+              this.transmuteItem(this.inventory[itemIndex], "common");
+              break;
+          }
+          break;
+
+        case "switcheroo":
+          this.tradeItem(target, itemIndex);
+          break;
+
+        case "trade":
+          this.tradeItem(target, itemIndex, target.selectItem());
+          break;
+
+        case "caltrops":
+          targetTile.addEffect("trapped");
+          break;
+
+        case "bola trap":
+          targetTile.addEffect("tied");
+          break;
+
+        case "tesla coil":
+          targetTile.addEffect("paralyzed");
+          break;
+
+        case "distracting magazine":
+          targetTile.addEffect("stunned");
+          break;
+
+        case "net gun":
+          target.addStatusEffect("trapped");
+          break;
+
+        case "finger trap":
+          target.addStatusEffect("tied");
           break;
       }
     },

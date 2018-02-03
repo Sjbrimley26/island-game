@@ -16,23 +16,29 @@ const GAME_CONFIG = {
 };
 
 const game = new Phaser.Game(GAME_CONFIG);
-game.playerMap = [];
-game.playerCount = 0;
-game.createPlayer = (x, y, image, name) => {
-  this.playerCount++;
-  return createPlayer(this.add.sprite(x, y, image), {
-    id: this.playerCount,
-    name
-  });
-};
 
 function preload() {
+  this.playerMap = [];
+  this.playerCount = 0;
+  this.createPlayer = (x, y, image, name) => {
+    this.playerCount++;
+    return createPlayer(this.add.sprite(x, y, image), {
+      id: this.playerCount,
+      name
+    });
+  };
+
   this.load.image("player", "assets/player.png");
 }
 
 function create() {
   const player1 = this.createPlayer(50, 50, "player", "Spencer");
   const player2 = this.createPlayer(300, 300, "player", "Fred");
+  for (let i = 0; i < 5; i++) {
+    player1.pickUpItem(itemDB.getRandomItem());
+  }
+  player1.pickUpItem(itemDB.getItem("mulligan"));
+  player1.useItem("mulligan");
 }
 
 /*
