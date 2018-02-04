@@ -3,7 +3,18 @@
 import "babel-polyfill";
 import { createPlayer, getRandomInt } from "./assets/Player.js";
 import itemDB from "./assets/ItemLibrary";
+import Client from "./assets/Client";
 import Phaser from "./phaser";
+
+function shuffle(a) {
+  var j, x, i;
+  for (i = a.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    x = a[i];
+    a[i] = a[j];
+    a[j] = x;
+  }
+}
 
 const GAME_CONFIG = {
   type: Phaser.AUTO,
@@ -11,35 +22,60 @@ const GAME_CONFIG = {
   height: 600,
   scene: {
     preload,
-    create
+    create,
+    update
   }
 };
 
 const game = new Phaser.Game(GAME_CONFIG);
 
-function preload() {
-  this.playerMap = [];
-  this.playerCount = 0;
-  this.createPlayer = (x, y, image, name) => {
-    this.playerCount++;
-    return createPlayer(this.add.sprite(x, y, image), {
-      id: this.playerCount,
+function init(game) {
+  game.playerMap = [];
+  game.playerCount = 0;
+  game.createPlayer = (x, y, image, name) => {
+    let player = createPlayer(game.add.sprite(x, y, image), {
+      id: game.playerCount,
       name
     });
+    game.playerMap.push(player);
+    game.playerCount++;
+    return player;
   };
 
+  game.onStartGame = () => {
+    game.victory = false;
+    game.turnOrder = [...game.playerMap];
+    shuffle(game.turnOrder);
+    game.currentTurn = 0;
+    game.nextTurn = () => {
+      if (game.currentTurn !== 0) {
+        game.turnOrder[game.currentTurn--].onEndTurn();
+        game.turnOrder[game.currentTurn].onStartTurn();
+      } else {
+        game.turnOrder[game.turnOrder.length - 1].onEndTurn();
+        game.turnOrder[game.currentTurn].onStartTurn();
+      }
+
+      if (game.currentTurn !== game.turnOrder.length - 1) {
+        game.currentTurn++;
+      } else {
+        game.currentTurn = 0;
+      }
+    };
+  };
+}
+
+function preload() {
   this.load.image("player", "assets/player.png");
+  init(this);
 }
 
 function create() {
-  const player1 = this.createPlayer(50, 50, "player", "Spencer");
-  const player2 = this.createPlayer(300, 300, "player", "Fred");
-  for (let i = 0; i < 5; i++) {
-    player1.pickUpItem(itemDB.getRandomItem());
-  }
-  player1.pickUpItem(itemDB.getItem("mulligan"));
-  player1.useItem("mulligan");
+  Client.addNewPlayer({ x: 50, y: 50, image: "player", name: "Spencer" });
+  this.onStartGame();
 }
+
+function update() {}
 
 /*
 

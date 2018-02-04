@@ -43,6 +43,7 @@ const distracting_magazine = targetsTile(
 );
 const net_gun = targetsEnemy(createChargedItem("net gun", "uncommon"));
 const finger_trap = targetsEnemy(createChargedItem("finger trap", "uncommon"));
+const portable_hole = createChargedItem("portable hole", "rare", 4);
 
 const itemList = [
   rabbit_foot,
@@ -67,7 +68,8 @@ const itemList = [
   tesla_coil,
   distracting_magazine,
   net_gun,
-  finger_trap
+  finger_trap,
+  portable_hole
 ];
 
 const commonsList = itemList.filter(item => item.rarity === "common");

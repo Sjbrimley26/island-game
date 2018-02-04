@@ -1,6 +1,5 @@
 import { roll_the_dice, lucky_roll } from "./Logic";
 import itemDB from "./ItemLibrary";
-import _ from "lodash";
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
@@ -276,6 +275,16 @@ function createPlayer(sprite, { ...args }) {
 
         case "finger trap":
           target.addStatusEffect("tied");
+          break;
+
+        case "portable hole":
+          if (diceRoll < 10) {
+            this.pickUpItem(itemDB.getRandomCommon());
+          } else if (diceRoll < 50) {
+            this.pickUpItem(itemDB.getRandomUncommon());
+          } else {
+            this.pickUpItem(itemDB.getRandomRare("portable hole"));
+          }
           break;
       }
     },
