@@ -4,9 +4,10 @@ import "babel-polyfill";
 import { createPlayer, getRandomInt } from "./assets/Player.js";
 import itemDB from "./assets/ItemLibrary";
 import Phaser from "./phaser";
-import io from "socket.io-client";
+import Client from './assets/Client';
 
-function shuffle(a) {
+
+function shuffle(a) { //shuffles an array in place
   var j, x, i;
   for (i = a.length - 1; i > 0; i--) {
     j = Math.floor(Math.random() * (i + 1));
@@ -27,71 +28,69 @@ const GAME_CONFIG = {
   }
 };
 
-const game = new Phaser.Game(GAME_CONFIG);
+let game = new Phaser.Game(GAME_CONFIG);
 
 function preload() {
-  console.log(this);
-  this.playerMap = [];
-  this.playerCount = 0;
-  this.createPlayer = (x, y, image, name) => {
+  game.playerMap = [];
+  game.playerCount = 0;
+  game.createPlayer = (x, y, image, name) => {
     let player = createPlayer(this.add.sprite(x, y, image), {
-      id: this.playerCount,
+      id: game.playerCount,
       name
     });
-    this.playerMap.push(player);
-    this.playerCount++;
+    game.playerMap.push(player.id);
+    game.playerCount++;
     return player;
   };
 
-  this.onStartGame = () => {
-    this.victory = false;
-    this.turnOrder = [...this.playerMap];
-    shuffle(this.turnOrder);
-    this.currentTurn = 0;
-    this.nextTurn = () => {
-      if (this.currentTurn !== 0) {
-        this.turnOrder[this.currentTurn--].onEndTurn();
-        this.turnOrder[this.currentTurn].onStartTurn();
+  game.onStartGame = () => {
+    game.victory = false;
+    console.log(game.playerMap);
+    console.log(game.playerMap.length);
+    console.log(game.playerMap[0]);
+    shuffle(game.turnOrder);
+    game.currentTurn = 0;
+    game.nextTurn = () => {
+      if (game.currentTurn !== 0) {
+        console.log("If");
+        game.turnOrder[game.currentTurn--].onEndTurn();
+        game.turnOrder[game.currentTurn].onStartTurn();
       } else {
-        this.turnOrder[this.turnOrder.length - 1].onEndTurn();
-        this.turnOrder[this.currentTurn].onStartTurn();
+        console.log("Else");
+        console.log(game.turnOrder.length);
+        game.turnOrder[game.turnOrder.length - 1].onEndTurn();
+        game.turnOrder[game.currentTurn].onStartTurn();
       }
 
-      if (this.currentTurn !== this.turnOrder.length - 1) {
-        this.currentTurn++;
+      if (game.currentTurn !== game.turnOrder.length - 1) {
+        game.currentTurn++;
       } else {
-        this.currentTurn = 0;
+        game.currentTurn = 0;
       }
     };
   };
-  game.Client = {};
-  game.Client.socket = io.connect("http://localhost:3333");
-  game.Client.addServerPlayer = data => {
-    game.Client.socket.emit("newplayer", data);
-  };
 
-  game.Client.socket.on("newplayer", data => {
-    this.createPlayer(data.x, data.y, data.image, data.name);
-  });
+  Client[0](); //createClient, not sure why the function won't import by itself
 
-  game.Client.socket.on("allplayers", data => {
-    for (let i = 0; i < data.length; i++) {
-      this.createPlayer(data[i].x, data[i].y, data[i].image, data[i].name);
-    }
-  });
   this.load.image("player", "assets/player.png");
 }
 
 function create() {
-  console.log(this);
-  game.scene.game.Client.addServerPlayer({
+  game.Client.addServerPlayer({
     x: 50,
     y: 50,
     image: "player",
     name: "Spencer"
   });
+  game.Client.addServerPlayer({
+    x: 200,
+    y: 200,
+    image: "player",
+    name: "Fred"
+  });
 
-  this.onStartGame();
+  game.onStartGame();
+  game.nextTurn();
 }
 
 function update() {}
