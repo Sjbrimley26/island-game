@@ -3,8 +3,8 @@
 import "babel-polyfill";
 import { createPlayer, getRandomInt } from "./assets/Player.js";
 import itemDB from "./assets/ItemLibrary";
-import Client from "./assets/Client";
 import Phaser from "./phaser";
+import io from "socket.io-client";
 
 function shuffle(a) {
   var j, x, i;
@@ -29,49 +29,68 @@ const GAME_CONFIG = {
 
 const game = new Phaser.Game(GAME_CONFIG);
 
-function init(game) {
-  game.playerMap = [];
-  game.playerCount = 0;
-  game.createPlayer = (x, y, image, name) => {
-    let player = createPlayer(game.add.sprite(x, y, image), {
-      id: game.playerCount,
+function preload() {
+  console.log(this);
+  this.playerMap = [];
+  this.playerCount = 0;
+  this.createPlayer = (x, y, image, name) => {
+    let player = createPlayer(this.add.sprite(x, y, image), {
+      id: this.playerCount,
       name
     });
-    game.playerMap.push(player);
-    game.playerCount++;
+    this.playerMap.push(player);
+    this.playerCount++;
     return player;
   };
 
-  game.onStartGame = () => {
-    game.victory = false;
-    game.turnOrder = [...game.playerMap];
-    shuffle(game.turnOrder);
-    game.currentTurn = 0;
-    game.nextTurn = () => {
-      if (game.currentTurn !== 0) {
-        game.turnOrder[game.currentTurn--].onEndTurn();
-        game.turnOrder[game.currentTurn].onStartTurn();
+  this.onStartGame = () => {
+    this.victory = false;
+    this.turnOrder = [...this.playerMap];
+    shuffle(this.turnOrder);
+    this.currentTurn = 0;
+    this.nextTurn = () => {
+      if (this.currentTurn !== 0) {
+        this.turnOrder[this.currentTurn--].onEndTurn();
+        this.turnOrder[this.currentTurn].onStartTurn();
       } else {
-        game.turnOrder[game.turnOrder.length - 1].onEndTurn();
-        game.turnOrder[game.currentTurn].onStartTurn();
+        this.turnOrder[this.turnOrder.length - 1].onEndTurn();
+        this.turnOrder[this.currentTurn].onStartTurn();
       }
 
-      if (game.currentTurn !== game.turnOrder.length - 1) {
-        game.currentTurn++;
+      if (this.currentTurn !== this.turnOrder.length - 1) {
+        this.currentTurn++;
       } else {
-        game.currentTurn = 0;
+        this.currentTurn = 0;
       }
     };
   };
-}
+  game.Client = {};
+  game.Client.socket = io.connect("http://localhost:3333");
+  game.Client.addServerPlayer = data => {
+    game.Client.socket.emit("newplayer", data);
+  };
 
-function preload() {
+  game.Client.socket.on("newplayer", data => {
+    this.createPlayer(data.x, data.y, data.image, data.name);
+  });
+
+  game.Client.socket.on("allplayers", data => {
+    for (let i = 0; i < data.length; i++) {
+      this.createPlayer(data[i].x, data[i].y, data[i].image, data[i].name);
+    }
+  });
   this.load.image("player", "assets/player.png");
-  init(this);
 }
 
 function create() {
-  Client.addNewPlayer({ x: 50, y: 50, image: "player", name: "Spencer" });
+  console.log(this);
+  game.scene.game.Client.addServerPlayer({
+    x: 50,
+    y: 50,
+    image: "player",
+    name: "Spencer"
+  });
+
   this.onStartGame();
 }
 

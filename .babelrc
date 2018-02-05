@@ -1,5 +1,9 @@
 {
   "presets": ["env"],
-  "plugins": ["transform-object-rest-spread", "transform-async-to-generator"],
+  "plugins": [
+    "transform-object-rest-spread",
+    "transform-async-to-generator",
+    "dynamic-import-node"
+  ],
   "ignore": ["./src/phaser.js"]
 }
